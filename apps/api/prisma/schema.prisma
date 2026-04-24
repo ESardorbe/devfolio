@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  username String  @unique
+  password String?
+  name      String?
+  avatar    String?
+  bio       String?
+  headline  String?
+  location  String?
+  website   String?
+  github    String?
+  linkedin  String?
+  telegram  String?
+  twitter   String?
+  githubId          String? @unique
+  githubAccessToken String?
+  isPublic      Boolean @default(true)
+  isOpenToWork  Boolean @default(false)
+  skills       Skill[]
+  projects     Project[]
+  experiences  Experience[]
+  educations   Education[]
+  profileViews ProfileView[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("users")
+}
+
+model Skill {
+  id       String     @id @default(cuid())
+  name     String
+  level    SkillLevel @default(INTERMEDIATE)
+  category String?
+  order    Int        @default(0)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@map("skills")
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  image       String?
+  github      String?
+  demo        String?
+  techs       String[]
+  featured    Boolean  @default(false)
+  order       Int      @default(0)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("projects")
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  company     String
+  position    String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean   @default(false)
+  location    String?
+  order       Int       @default(0)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("experiences")
+}
+
+model Education {
+  id          String    @id @default(cuid())
+  institution String
+  degree      String
+  field       String
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean   @default(false)
+  description String?
+  order       Int       @default(0)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@map("educations")
+}
+
+model ProfileView {
+  id        String  @id @default(cuid())
+  ip        String?
+  country   String?
+  city      String?
+  source    String?
+  userAgent String?
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@map("profile_views")
+}
