@@ -22,18 +22,48 @@ model User {
   linkedin  String?
   telegram  String?
   twitter   String?
+
   githubId          String? @unique
   githubAccessToken String?
-  isPublic      Boolean @default(true)
-  isOpenToWork  Boolean @default(false)
+  googleId          String? @unique
+  githubUsername String?
+
+  isPublic        Boolean @default(true)
+  isOpenToWork    Boolean @default(false)
+  isEmailVerified Boolean @default(false)
+
   skills       Skill[]
   projects     Project[]
   experiences  Experience[]
   educations   Education[]
   profileViews ProfileView[]
+  otpCodes     OtpCode[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("users")
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  type      OtpType
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("otp_codes")
+}
+
+enum OtpType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
 }
 
 model Skill {
@@ -42,9 +72,12 @@ model Skill {
   level    SkillLevel @default(INTERMEDIATE)
   category String?
   order    Int        @default(0)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
+
   @@map("skills")
 }
 
@@ -65,10 +98,13 @@ model Project {
   techs       String[]
   featured    Boolean  @default(false)
   order       Int      @default(0)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("projects")
 }
 
@@ -82,10 +118,13 @@ model Experience {
   isCurrent   Boolean   @default(false)
   location    String?
   order       Int       @default(0)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("experiences")
 }
 
@@ -99,9 +138,12 @@ model Education {
   isCurrent   Boolean   @default(false)
   description String?
   order       Int       @default(0)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
+
   @@map("educations")
 }
 
@@ -112,8 +154,11 @@ model ProfileView {
   city      String?
   source    String?
   userAgent String?
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
+
   @@map("profile_views")
 }
