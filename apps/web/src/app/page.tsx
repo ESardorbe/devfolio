@@ -92,7 +92,7 @@ export default function HomePage() {
           <Link href="/register" className="btn-big" style={{ textDecoration: 'none' }}>
             Bepul boshlash →
           </Link>
-          <Link href="/u/demo" className="btn-big-ghost" style={{ textDecoration: 'none' }}>
+          <Link href={"/u/demo" as any} className="btn-big-ghost" style={{ textDecoration: 'none' }}>
             Namunani ko'rish
           </Link>
         </div>

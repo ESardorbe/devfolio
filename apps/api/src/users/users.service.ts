@@ -117,4 +117,13 @@ export class UsersService {
     });
     return { total, last30days };
   }
+
+  // --- Avatar yangilash ---
+  async updateAvatar(userId: string, avatarUrl: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatar: avatarUrl },
+      select: { id: true, avatar: true },
+    });
+  }
 }
