@@ -8,6 +8,13 @@ interface User {
   name: string | null;
   avatar: string | null;
   headline: string | null;
+  bio: string | null;
+  location: string | null;
+  website: string | null;
+  github: string | null;
+  linkedin: string | null;
+  telegram: string | null;
+  twitter: string | null;
   isEmailVerified: boolean;
   isPublic: boolean;
   isOpenToWork: boolean;

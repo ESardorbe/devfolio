@@ -1,13 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/src/store/auth.store';
 import { User, LogOut, LayoutDashboard } from 'lucide-react';
 
 export function Navbar() {
-  const pathname = usePathname();
   const { user, logout, isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/';
+  };
 
   return (
     <nav
@@ -44,11 +53,10 @@ export function Navbar() {
         {[
           { href: '/#features', label: 'Imkoniyatlar' },
           { href: '/#preview', label: 'Namuna' },
-          { href: '/#pricing', label: 'Narx' },
         ].map((link) => (
           <li key={link.href}>
             <Link
-              href={link.href}
+              href={link.href as any}
               style={{
                 color: 'var(--text2)',
                 textDecoration: 'none',
@@ -67,14 +75,14 @@ export function Navbar() {
 
       {/* Auth buttons */}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        {isAuthenticated() ? (
+        {!mounted ? null : isAuthenticated() ? (
           <>
             <Link href="/dashboard" className="btn-ghost" style={{ textDecoration: 'none' }}>
               <LayoutDashboard size={14} />
               Dashboard
             </Link>
             <Link
-              href={`/u/${user?.username}`}
+              href={`/u/${user?.username}` as any}
               className="btn-ghost"
               style={{ textDecoration: 'none' }}
             >
@@ -82,7 +90,7 @@ export function Navbar() {
               Profilim
             </Link>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="btn-ghost"
               style={{ color: '#ff6b6b', borderColor: 'rgba(255,107,107,0.3)' }}
             >

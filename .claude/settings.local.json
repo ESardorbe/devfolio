@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(grep \"u\\\\[username\\\\]\\\\|u\\\\\\\\\\\\[\")",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); const keys = Object.keys\\(l\\); console.log\\(keys.filter\\(k => k.match\\(/^\\(Link|External|Globe|Share|User|At|Hash|Code|Terminal|Rss|Wifi|Radio|Broadcast|Network|Contact|Profile|Social|Link2\\)/i\\)\\).filter\\(k => !k.includes\\('Icon'\\) && !k.includes\\('Lucide'\\)\\)\\)\")"
+    ]
+  }
+}

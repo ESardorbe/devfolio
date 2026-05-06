@@ -33,7 +33,6 @@ export class UsersService {
           orderBy: { order: 'asc' },
         },
         projects: {
-          where: { featured: true },
           orderBy: { order: 'asc' },
         },
         experiences: {
