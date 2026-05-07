@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   keywords: ['portfolio', 'developer', 'dasturchi', 'resume', 'CV', 'DevFolio', 'IT mutaxassis'],
   authors: [{ name: 'DevFolio' }],
   metadataBase: new URL('https://devfolio.uz'),
+  verification: {
+    google: 'r4JGWLW1-ML4BSrPxUr22BvXBGElV5YWiuSzZ_pvIqc',
+  },
   openGraph: {
     type: 'website',
     locale: 'uz_UZ',
