@@ -7,7 +7,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-  const apiBase = apiUrl.replace('/api', '');
+  const apiBase = apiUrl.replace(/\/api$/, '');
 
   try {
     const res = await fetch(`${apiUrl}/users/${username}`, {

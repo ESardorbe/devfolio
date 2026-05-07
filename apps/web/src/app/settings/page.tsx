@@ -9,7 +9,7 @@ import { usersApi } from '@/src/services';
 import { Save, ArrowLeft, Eye, EyeOff, Camera } from 'lucide-react';
 import { authApi } from '@/src/services/auth.api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
 
 const COUNTRY_CODES = [
   { dial: '+998', flag: '🇺🇿', name: "O'zbekiston" },
