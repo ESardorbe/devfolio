@@ -10,18 +10,20 @@ import { EmailModule } from './email/email.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ExperiencesModule } from './experiences/experiences.module';
 import { EducationsModule } from './educations/educations.module';
+import { CertificatesModule } from './certificates/certificates.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,  
+    PrismaModule,
     AuthModule,
     UsersModule,
     SkillsModule,
     EmailModule,
     ProjectsModule,
     ExperiencesModule,
-    EducationsModule
+    EducationsModule,
+    CertificatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -15,6 +15,8 @@ interface User {
   linkedin: string | null;
   telegram: string | null;
   twitter: string | null;
+  phone: string | null;
+  birthDate: string | null;
   isEmailVerified: boolean;
   isPublic: boolean;
   isOpenToWork: boolean;

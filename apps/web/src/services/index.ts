@@ -46,6 +46,19 @@ export interface Education {
   order: number;
 }
 
+export interface Certificate {
+  id: string;
+  title: string;
+  issuer?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  url?: string;
+  fileUrl?: string;
+  fileType?: string;
+  order: number;
+  createdAt: string;
+}
+
 export interface UpdateProfileDto {
   name?: string;
   username?: string;
@@ -57,6 +70,8 @@ export interface UpdateProfileDto {
   linkedin?: string;
   telegram?: string;
   twitter?: string;
+  phone?: string;
+  birthDate?: string;
   isPublic?: boolean;
   isOpenToWork?: boolean;
 }
@@ -69,6 +84,13 @@ export const usersApi = {
   updateProfile: (data: UpdateProfileDto) =>
     api.put('/users/me', data) as Promise<any>,
   getViews: () => api.get('/users/me/views') as Promise<any>,
+  uploadAvatar: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post('/users/me/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }) as Promise<any>;
+  },
 };
 
 // ─── Skills API ───────────────────────────────────────────
@@ -108,4 +130,48 @@ export const educationsApi = {
   update: (id: string, data: any) =>
     api.put(`/educations/${id}`, data) as Promise<any>,
   delete: (id: string) => api.delete(`/educations/${id}`) as Promise<any>,
+};
+
+// ─── Certificates API ─────────────────────────────────────
+export const certificatesApi = {
+  getAll: () => api.get('/certificates') as Promise<any>,
+  create: (data: {
+    title: string;
+    issuer?: string;
+    issueDate?: string;
+    expiryDate?: string;
+    url?: string;
+    file?: File;
+  }) => {
+    const form = new FormData();
+    form.append('title', data.title);
+    if (data.issuer) form.append('issuer', data.issuer);
+    if (data.issueDate) form.append('issueDate', data.issueDate);
+    if (data.expiryDate) form.append('expiryDate', data.expiryDate);
+    if (data.url) form.append('url', data.url);
+    if (data.file) form.append('file', data.file);
+    return api.post('/certificates', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }) as Promise<any>;
+  },
+  update: (id: string, data: {
+    title?: string;
+    issuer?: string;
+    issueDate?: string;
+    expiryDate?: string;
+    url?: string;
+    file?: File;
+  }) => {
+    const form = new FormData();
+    if (data.title) form.append('title', data.title);
+    if (data.issuer) form.append('issuer', data.issuer);
+    if (data.issueDate !== undefined) form.append('issueDate', data.issueDate);
+    if (data.expiryDate !== undefined) form.append('expiryDate', data.expiryDate);
+    if (data.url !== undefined) form.append('url', data.url);
+    if (data.file) form.append('file', data.file);
+    return api.put(`/certificates/${id}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }) as Promise<any>;
+  },
+  delete: (id: string) => api.delete(`/certificates/${id}`) as Promise<any>,
 };

@@ -1,4 +1,5 @@
-import { Controller, Get, Put, Post, Body, Param, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, Param, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -24,11 +25,26 @@ export class UsersController {
     return this.usersService.getMyProfile(userId);
   }
 
+  // GET /users/sitemap-list — sitemap uchun barcha public username lar
+  @Get('sitemap-list')
+  @ApiOperation({ summary: 'Sitemap uchun public username lar' })
+  getSitemapList() {
+    return this.usersService.getSitemapList();
+  }
+
   // GET /users/:username — public profil
   @Get(':username')
   @ApiOperation({ summary: 'Public profil ko\'rish (/u/username)' })
-  getPublicProfile(@Param('username') username: string) {
-    return this.usersService.getPublicProfile(username);
+  async getPublicProfile(
+    @Param('username') username: string,
+    @Req() req: Request,
+  ) {
+    const profile = await this.usersService.getPublicProfile(username);
+    this.usersService.recordProfileView(profile.id, {
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    }).catch(() => {});
+    return profile;
   }
 
   // PUT /users/me — profilni yangilash
@@ -61,18 +77,18 @@ export class UsersController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: (req, file, cb) => {
+        destination: (_req, _file, cb) => {
           const uploadPath = join(process.cwd(), 'uploads', 'avatars');
           if (!existsSync(uploadPath)) mkdirSync(uploadPath, { recursive: true });
           cb(null, uploadPath);
         },
-        filename: (req, file, cb) => {
+        filename: (_req, file, cb) => {
           const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
           cb(null, uniqueName);
         },
       }),
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-      fileFilter: (req, file, cb) => {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
           return cb(new BadRequestException('Faqat rasm fayllari qabul qilinadi'), false);
         }

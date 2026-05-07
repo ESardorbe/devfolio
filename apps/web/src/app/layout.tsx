@@ -16,9 +16,37 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DevFolio — IT Mutaxassislari Uchun Portfolio',
-  description: 'Dasturchilar va IT mutaxassislar uchun zamonaviy portfolio platforma',
-  keywords: ['portfolio', 'developer', 'resume', 'CV', 'DevFolio'],
+  title: {
+    default: "DevFolio — IT Mutaxassislari Uchun Portfolio",
+    template: "%s | DevFolio",
+  },
+  description: "O'zbekistonlik dasturchilar va IT mutaxassislar uchun zamonaviy portfolio platforma. Ko'nikmalar, loyihalar va tajribangizni professional CV sifatida ulashing.",
+  keywords: ['portfolio', 'developer', 'dasturchi', 'resume', 'CV', 'DevFolio', 'IT mutaxassis'],
+  authors: [{ name: 'DevFolio' }],
+  metadataBase: new URL('https://devfolio.uz'),
+  openGraph: {
+    type: 'website',
+    locale: 'uz_UZ',
+    url: 'https://devfolio.uz',
+    siteName: 'DevFolio',
+    title: "DevFolio — IT Mutaxassislari Uchun Portfolio",
+    description: "O'zbekistonlik dasturchilar uchun zamonaviy portfolio platforma",
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'DevFolio' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DevFolio',
+    description: "IT mutaxassislari uchun portfolio platforma",
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  alternates: {
+    canonical: 'https://devfolio.uz',
+  },
 };
 
 export default function RootLayout({

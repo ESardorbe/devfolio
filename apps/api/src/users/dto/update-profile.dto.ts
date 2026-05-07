@@ -1,11 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUrl, IsBoolean } from 'class-validator';
+import { IsUrl, IsBoolean, IsISO8601 } from 'class-validator';
 import { IsString, MaxLength, Matches, IsOptional } from 'class-validator';
- 
+
 export class UpdateProfileDto {
   @IsOptional() @IsString() @MaxLength(30)
   @Matches(/^[a-z0-9_-]+$/) username?: string;
- 
+
   @IsOptional() @IsString() @MaxLength(100) name?: string;
   @IsOptional() @IsString() @MaxLength(200) headline?: string;
   @IsOptional() @IsString() @MaxLength(500) bio?: string;
@@ -17,4 +16,6 @@ export class UpdateProfileDto {
   @IsOptional() @IsString() twitter?: string;
   @IsOptional() @IsBoolean() isPublic?: boolean;
   @IsOptional() @IsBoolean() isOpenToWork?: boolean;
+  @IsOptional() @IsString() @MaxLength(25) phone?: string;
+  @IsOptional() @IsISO8601() birthDate?: string;
 }

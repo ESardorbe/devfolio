@@ -21,7 +21,9 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
+      const url = error.config?.url ?? '';
+      const isAuthCall = url.includes('/auth/login') || url.includes('/auth/register');
+      if (typeof window !== 'undefined' && !isAuthCall) {
         localStorage.removeItem('accessToken');
         window.location.href = '/login';
       }

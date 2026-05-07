@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { usersApi } from '@/src/services';
 import {
   MapPin, Globe, GitBranch, Link2, AtSign,
-  Send, ExternalLink, Calendar, Star,
+  Send, ExternalLink, Calendar, Star, Phone,
 } from 'lucide-react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
 
 const LEVEL_COLORS: Record<string, string> = {
   BEGINNER: '#6366f1',
@@ -88,7 +90,9 @@ export default function PublicProfilePage() {
             {/* Avatar */}
             <div style={{
               width: '96px', height: '96px', borderRadius: '50%', flexShrink: 0,
-              background: profile.avatar ? `url(${profile.avatar}) center/cover` : 'var(--surface2)',
+              background: profile.avatar
+                ? `url(${profile.avatar.startsWith('http') ? profile.avatar : `${API_URL}${profile.avatar}`}) center/cover`
+                : 'var(--surface2)',
               border: '3px solid var(--accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '36px',
@@ -113,6 +117,17 @@ export default function PublicProfilePage() {
                   <span style={{ fontSize: '13px', color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <MapPin size={12} /> {profile.location}
                   </span>
+                )}
+                {profile.birthDate && (
+                  <span style={{ fontSize: '13px', color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={12} />
+                    {new Date(profile.birthDate).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                )}
+                {profile.phone && (
+                  <a href={`tel:${profile.phone}`} style={{ fontSize: '13px', color: 'var(--text2)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Phone size={12} /> {profile.phone}
+                  </a>
                 )}
                 {profile.website && (
                   <a href={profile.website} target="_blank" style={{ fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -272,6 +287,64 @@ export default function PublicProfilePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Certificates */}
+        {profile.certificates?.length > 0 && (
+          <div className="card" style={{ marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>
+              🏆 Sertifikatlar va Diplomlar
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              {profile.certificates.map((c: any) => {
+                const fileSrc = c.fileUrl ? (c.fileUrl.startsWith('http') ? c.fileUrl : `${API_URL}${c.fileUrl}`) : null;
+                return (
+                  <div key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {/* Header: badge + info */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'linear-gradient(135deg, #00c853, #00e5ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '22px' }}>
+                        🏆
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1.3 }}>{c.title}</h3>
+                        {c.issuer && <p style={{ fontSize: '12px', color: 'var(--text2)', marginTop: '2px' }}>{c.issuer}</p>}
+                        {c.issueDate && (
+                          <p style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '2px' }}>
+                            {new Date(c.issueDate).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short' })}
+                            {c.expiryDate ? ` — ${new Date(c.expiryDate).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short' })}` : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Show credential button */}
+                    {c.url && (
+                      <a href={c.url} target="_blank" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--text)', border: '1px solid var(--border2)', borderRadius: '6px', padding: '6px 12px', textDecoration: 'none', width: 'fit-content' }}>
+                        <ExternalLink size={11} /> Sertifikatni ko'rish
+                      </a>
+                    )}
+
+                    {/* File thumbnail — LinkedIn style */}
+                    {fileSrc && c.fileType === 'image' && (
+                      <a href={fileSrc} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', background: 'var(--surface2)', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none' }}>
+                        <img src={fileSrc} alt={c.title} style={{ width: '80px', height: '54px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                        <span style={{ fontSize: '12px', color: 'var(--text2)', lineHeight: 1.4 }}>Sertifikat — {c.title}</span>
+                      </a>
+                    )}
+                    {fileSrc && c.fileType === 'pdf' && (
+                      <a href={fileSrc} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', background: 'var(--surface2)', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none' }}>
+                        <div style={{ width: '80px', height: '54px', background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, gap: '2px' }}>
+                          <span style={{ fontSize: '20px' }}>📄</span>
+                          <span style={{ fontSize: '9px', color: '#dc2626', fontWeight: 700 }}>PDF</span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: 'var(--text2)', lineHeight: 1.4 }}>Sertifikat — {c.title}</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -26,21 +26,15 @@ export class UsersService {
         linkedin: true,
         telegram: true,
         twitter: true,
+        phone: true,
+        birthDate: true,
         isOpenToWork: true,
         createdAt: true,
-        // Bog'liq jadvallar
-        skills: {
-          orderBy: { order: 'asc' },
-        },
-        projects: {
-          orderBy: { order: 'asc' },
-        },
-        experiences: {
-          orderBy: { order: 'asc' },
-        },
-        educations: {
-          orderBy: { order: 'asc' },
-        },
+        skills: { orderBy: { order: 'asc' } },
+        projects: { orderBy: { order: 'asc' } },
+        experiences: { orderBy: { order: 'asc' } },
+        educations: { orderBy: { order: 'asc' } },
+        certificates: { orderBy: { order: 'asc' } },
       },
     });
 
@@ -64,6 +58,16 @@ export class UsersService {
     });
   }
 
+  // --- Sitemap uchun public username lar ---
+  async getSitemapList() {
+    return this.prisma.user.findMany({
+      where: { isPublic: true },
+      select: { username: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5000,
+    });
+  }
+
   // --- Profilni yangilash ---
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     // Username o'zgartirilayotgan bo'lsa
@@ -82,11 +86,15 @@ export class UsersService {
       data: {
         ...dto,
         username: dto.username?.toLowerCase(),
+        birthDate: dto.birthDate !== undefined
+          ? (dto.birthDate ? new Date(dto.birthDate) : null)
+          : undefined,
       },
       select: {
         id: true, username: true, name: true, avatar: true,
         bio: true, headline: true, location: true, website: true,
         github: true, linkedin: true, telegram: true, twitter: true,
+        phone: true, birthDate: true,
         isPublic: true, isOpenToWork: true,
       },
     });

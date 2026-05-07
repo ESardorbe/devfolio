@@ -11,7 +11,7 @@ import { useAuthStore } from '../../../store/auth.store';
 import { Eye, EyeOff} from 'lucide-react';
 
 const schema = z.object({
-  email: z.string().email('Email noto\'g\'ri'),
+  email: z.string().email({ message: 'Email noto\'g\'ri' }),
   password: z.string().min(1, 'Parolni kiriting'),
 });
 
@@ -26,6 +26,7 @@ export default function LoginPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -33,11 +34,11 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await authApi.login(data);
+      localStorage.setItem('accessToken', res.accessToken);
       localStorage.setItem('refreshToken', res.refreshToken);
 
-      // Me ni olamiz
       const me = await authApi.getMe();
-      setAuth(me.data, res.accessToken);
+      setAuth(me, res.accessToken);
 
       router.push('/dashboard');
     } catch (err: any) {

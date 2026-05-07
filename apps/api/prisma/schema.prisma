@@ -28,6 +28,9 @@ model User {
   googleId          String? @unique
   githubUsername String?
 
+  phone     String?
+  birthDate DateTime?
+
   isPublic        Boolean @default(true)
   isOpenToWork    Boolean @default(false)
   isEmailVerified Boolean @default(false)
@@ -36,6 +39,7 @@ model User {
   projects     Project[]
   experiences  Experience[]
   educations   Education[]
+  certificates Certificate[]
   profileViews ProfileView[]
   otpCodes     OtpCode[]
 
@@ -145,6 +149,26 @@ model Education {
   createdAt DateTime @default(now())
 
   @@map("educations")
+}
+
+model Certificate {
+  id         String    @id @default(cuid())
+  title      String
+  issuer     String?
+  issueDate  DateTime?
+  expiryDate DateTime?
+  url        String?
+  fileUrl    String?
+  fileType   String?
+  order      Int       @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("certificates")
 }
 
 model ProfileView {

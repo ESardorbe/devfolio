@@ -1,20 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/src/store/auth.store';
 import { Navbar } from '@/src/components/layout/Navbar';
 import {
   skillsApi, projectsApi, experiencesApi,
-  educationsApi, usersApi,
-  type Skill, type Project, type Experience, type Education,
+  educationsApi, usersApi, certificatesApi,
+  type Skill, type Project, type Experience, type Education, type Certificate,
 } from '@/src/services';
 import {
   Plus, Trash2, Edit3, ExternalLink, GitBranch,
   Eye, Briefcase, GraduationCap, Code2,
-  Settings, ChevronRight, Star,
+  Settings, ChevronRight, Star, Download,
 } from 'lucide-react';
+import { ExportModal } from '@/src/components/ExportModal';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
 
 const LEVEL_COLORS: Record<string, string> = {
   BEGINNER: '#6366f1',
@@ -30,7 +33,7 @@ const LEVEL_LABELS: Record<string, string> = {
   EXPERT: 'Ekspert',
 };
 
-type Tab = 'overview' | 'skills' | 'projects' | 'experience' | 'education';
+type Tab = 'overview' | 'skills' | 'projects' | 'experience' | 'education' | 'certificates';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -40,15 +43,10 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [views, setViews] = useState({ total: 0, last30days: 0 });
   const [loading, setLoading] = useState(true);
-
-  // Modals
-  const [skillModal, setSkillModal] = useState(false);
-  const [projectModal, setProjectModal] = useState(false);
-  const [expModal, setExpModal] = useState(false);
-  const [eduModal, setEduModal] = useState(false);
-  const [editItem, setEditItem] = useState<any>(null);
+  const [showExport, setShowExport] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -59,7 +57,7 @@ export default function DashboardPage() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [profileRes, skillsRes, projectsRes, expRes, eduRes, viewsRes] =
+      const [profileRes, skillsRes, projectsRes, expRes, eduRes, viewsRes, certRes] =
         await Promise.allSettled([
           usersApi.getMe(),
           skillsApi.getAll(),
@@ -67,24 +65,18 @@ export default function DashboardPage() {
           experiencesApi.getAll(),
           educationsApi.getAll(),
           usersApi.getViews(),
+          certificatesApi.getAll(),
         ]);
 
       if (profileRes.status === 'fulfilled') {
         const p = profileRes.value?.data || profileRes.value;
         if (p) setUser(p);
       }
-      if (skillsRes.status === 'fulfilled') {
-        setSkills(skillsRes.value?.data || skillsRes.value || []);
-      }
-      if (projectsRes.status === 'fulfilled') {
-        setProjects(projectsRes.value?.data || projectsRes.value || []);
-      }
-      if (expRes.status === 'fulfilled') {
-        setExperiences(expRes.value?.data || expRes.value || []);
-      }
-      if (eduRes.status === 'fulfilled') {
-        setEducations(eduRes.value?.data || eduRes.value || []);
-      }
+      if (skillsRes.status === 'fulfilled') setSkills(skillsRes.value?.data || skillsRes.value || []);
+      if (projectsRes.status === 'fulfilled') setProjects(projectsRes.value?.data || projectsRes.value || []);
+      if (expRes.status === 'fulfilled') setExperiences(expRes.value?.data || expRes.value || []);
+      if (eduRes.status === 'fulfilled') setEducations(eduRes.value?.data || eduRes.value || []);
+      if (certRes.status === 'fulfilled') setCertificates(certRes.value?.data || certRes.value || []);
       if (viewsRes.status === 'fulfilled') {
         const v = viewsRes.value?.data || viewsRes.value;
         if (v) setViews(v);
@@ -102,11 +94,36 @@ export default function DashboardPage() {
     { id: 'projects', label: 'Loyihalar', icon: Star, count: projects.length },
     { id: 'experience', label: 'Tajriba', icon: Briefcase, count: experiences.length },
     { id: 'education', label: 'Ta\'lim', icon: GraduationCap, count: educations.length },
+    { id: 'certificates', label: 'Sertifikatlar', icon: GraduationCap, count: certificates.length },
   ];
 
   return (
     <>
       <Navbar />
+      <ExportModal
+        isOpen={showExport}
+        onClose={() => setShowExport(false)}
+        profile={{
+          name: user.name,
+          username: user.username,
+          headline: user.headline,
+          bio: user.bio,
+          location: user.location,
+          website: user.website,
+          github: user.github,
+          linkedin: user.linkedin,
+          phone: user.phone,
+          avatarUrl: user.avatar
+            ? (user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`)
+            : undefined,
+          isOpenToWork: user.isOpenToWork,
+          skills,
+          projects,
+          experiences,
+          educations,
+          certificates,
+        }}
+      />
       <main style={{ minHeight: '100vh', padding: '80px 0 48px', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px' }}>
 
@@ -116,7 +133,9 @@ export default function DashboardPage() {
               {/* Avatar */}
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
-                background: user.avatar ? `url(${user.avatar}) center/cover` : 'var(--surface2)',
+                background: user.avatar
+                  ? `url(${user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`}) center/cover`
+                  : 'var(--surface2)',
                 border: '2px solid var(--accent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '24px', flexShrink: 0,
@@ -151,6 +170,13 @@ export default function DashboardPage() {
               >
                 <Eye size={14} /> Profilni ko'rish
               </Link>
+              <button
+                onClick={() => setShowExport(true)}
+                className="btn-ghost"
+                style={{ fontSize: '13px', padding: '8px 16px' }}
+              >
+                <Download size={14} /> Yuklab olish
+              </button>
               <Link
                 href={"/settings" as any}
                 className="btn-primary"
@@ -338,10 +364,12 @@ export default function DashboardPage() {
 
               {/* ── EDUCATION ── */}
               {activeTab === 'education' && (
-                <EducationTab
-                  educations={educations}
-                  onRefresh={loadAll}
-                />
+                <EducationTab educations={educations} onRefresh={loadAll} />
+              )}
+
+              {/* ── CERTIFICATES ── */}
+              {activeTab === 'certificates' && (
+                <CertificatesTab certificates={certificates} onRefresh={loadAll} />
               )}
             </>
           )}
@@ -918,6 +946,207 @@ function EducationTab({ educations, onRefresh }: { educations: Education[]; onRe
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Certificates Tab ─────────────────────────────────────
+function CertificatesTab({ certificates, onRefresh }: { certificates: Certificate[]; onRefresh: () => void }) {
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Certificate | null>(null);
+  const [form, setForm] = useState({ title: '', issuer: '', issueDate: '', expiryDate: '', url: '' });
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const openAdd = () => {
+    setEditing(null);
+    setForm({ title: '', issuer: '', issueDate: '', expiryDate: '', url: '' });
+    setFile(null); setFilePreview('');
+    setShowForm(true);
+  };
+
+  const openEdit = (c: Certificate) => {
+    setEditing(c);
+    setForm({
+      title: c.title, issuer: c.issuer || '',
+      issueDate: c.issueDate?.slice(0, 10) || '',
+      expiryDate: c.expiryDate?.slice(0, 10) || '',
+      url: c.url || '',
+    });
+    setFile(null);
+    setFilePreview(c.fileUrl ? (c.fileUrl.startsWith('http') ? c.fileUrl : `${API_URL}${c.fileUrl}`) : '');
+    setShowForm(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    if (f.type.startsWith('image/')) {
+      setFilePreview(URL.createObjectURL(f));
+    } else {
+      setFilePreview('pdf');
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!form.title.trim()) return;
+    setLoading(true);
+    try {
+      const data = { ...form, file: file || undefined };
+      if (editing) {
+        await certificatesApi.update(editing.id, data);
+      } else {
+        await certificatesApi.create(data);
+      }
+      setShowForm(false);
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Sertifikat o\'chirilsinmi?')) return;
+    await certificatesApi.delete(id);
+    onRefresh();
+  };
+
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short' });
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Sertifikatlar va Diplomlar</h2>
+        <button onClick={openAdd} className="btn-primary" style={{ fontSize: '13px', padding: '8px 16px' }}>
+          <Plus size={14} /> Sertifikat qo'shish
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ marginBottom: '20px', borderColor: 'var(--border2)' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>
+            {editing ? 'Tahrirlash' : 'Yangi sertifikat'}
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '6px' }}>Nomi *</label>
+                <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="AWS Solutions Architect" />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '6px' }}>Bergan tashkilot</label>
+                <input className="input" value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} placeholder="Amazon, Coursera..." />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '6px' }}>Berilgan sana</label>
+                <input type="date" className="input" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '6px' }}>Muddati tugaydi</label>
+                <input type="date" className="input" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '6px' }}>Havola (URL)</label>
+              <input className="input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://credentials.example.com/..." />
+            </div>
+
+            {/* File upload */}
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '6px' }}>Fayl yuklash (rasm yoki PDF)</label>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button type="button" onClick={() => fileRef.current?.click()} className="btn-ghost" style={{ fontSize: '13px' }}>
+                  📎 Fayl tanlash
+                </button>
+                {filePreview && filePreview !== 'pdf' && (
+                  <img src={filePreview} alt="preview" style={{ height: '48px', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                )}
+                {filePreview === 'pdf' && (
+                  <span style={{ fontSize: '13px', color: 'var(--accent)' }}>📄 {file?.name || 'PDF fayl'}</span>
+                )}
+                {!filePreview && editing?.fileUrl && (
+                  <span style={{ fontSize: '12px', color: 'var(--text3)' }}>Mavjud fayl saqlangan</span>
+                )}
+                <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileChange} />
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '4px' }}>JPG, PNG, WebP yoki PDF — 10MB gacha</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={handleSubmit} className="btn-primary" disabled={loading} style={{ fontSize: '13px' }}>
+              {loading ? 'Saqlanmoqda...' : editing ? 'Saqlash' : 'Qo\'shish'}
+            </button>
+            <button onClick={() => setShowForm(false)} className="btn-ghost" style={{ fontSize: '13px' }}>Bekor</button>
+          </div>
+        </div>
+      )}
+
+      {certificates.length === 0 ? (
+        <EmptyState icon="🏆" text="Hali sertifikat qo'shilmagan" onAdd={openAdd} />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+          {certificates.map((c) => {
+            const fileSrc = c.fileUrl ? (c.fileUrl.startsWith('http') ? c.fileUrl : `${API_URL}${c.fileUrl}`) : null;
+            return (
+              <div key={c.id} className="card" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* Header: issuer badge + info */}
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', paddingRight: '52px' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'linear-gradient(135deg, #00c853, #00e5ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '22px' }}>
+                    🏆
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.3 }}>{c.title}</h3>
+                    {c.issuer && <p style={{ fontSize: '13px', color: 'var(--text2)', marginTop: '2px' }}>{c.issuer}</p>}
+                    {c.issueDate && (
+                      <p style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '2px' }}>
+                        Berilgan: {formatDate(c.issueDate)}
+                        {c.expiryDate ? ` · Muddati: ${formatDate(c.expiryDate)}` : ''}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Show credential button */}
+                {c.url && (
+                  <div>
+                    <a href={c.url} target="_blank" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--text)', background: 'transparent', border: '1px solid var(--border2)', borderRadius: '6px', padding: '6px 12px', textDecoration: 'none' }}>
+                      <ExternalLink size={11} /> Sertifikatni ko'rish
+                    </a>
+                  </div>
+                )}
+
+                {/* File thumbnail — LinkedIn style */}
+                {fileSrc && c.fileType === 'image' && (
+                  <a href={fileSrc} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', background: 'var(--surface2)', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none' }}>
+                    <img src={fileSrc} alt={c.title} style={{ width: '80px', height: '54px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                    <span style={{ fontSize: '12px', color: 'var(--text2)', lineHeight: 1.4 }}>Sertifikat — {c.title}</span>
+                  </a>
+                )}
+                {fileSrc && c.fileType === 'pdf' && (
+                  <a href={fileSrc} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', background: 'var(--surface2)', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none' }}>
+                    <div style={{ width: '80px', height: '54px', background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, gap: '2px' }}>
+                      <span style={{ fontSize: '20px' }}>📄</span>
+                      <span style={{ fontSize: '9px', color: '#dc2626', fontWeight: 700 }}>PDF</span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text2)', lineHeight: 1.4 }}>Sertifikat — {c.title}</span>
+                  </a>
+                )}
+
+                {/* Edit/delete */}
+                <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '6px' }}>
+                  <button onClick={() => openEdit(c)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer' }}><Edit3 size={14} /></button>
+                  <button onClick={() => handleDelete(c.id)} style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
