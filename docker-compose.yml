@@ -54,6 +54,8 @@ services:
       context: ./apps/web
       args:
         NEXT_PUBLIC_API_URL: https://api.devfolio.uz/api
+        NEXT_PUBLIC_SITE_URL: https://devfolio.uz
+        NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: r4JGWLW1-ML4BSrPxUr22BvXBGElV5YWiuSzZ_pvIqc
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
