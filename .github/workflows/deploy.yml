@@ -20,15 +20,6 @@ jobs:
           script: |
             set -e
             cd /opt/devfolio
-
-            # .env faylni yangilash
-            cat > apps/web/.env.production << 'EOF'
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
-            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
-            NEXT_PUBLIC_YANDEX_VERIFICATION=${{ secrets.NEXT_PUBLIC_YANDEX_VERIFICATION }}
-            EOF
-
             git pull origin main
             docker-compose up -d --build --remove-orphans
             docker image prune -f
