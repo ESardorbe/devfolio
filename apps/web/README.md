@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Devfolio — Web
+
+Next.js 16 frontend for the Devfolio portfolio platform.
+
+**Live:** [devfolio.uz](https://devfolio.uz)
+
+---
+
+## Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS v4
+- **State:** Zustand
+- **Server state:** TanStack Query v5
+- **Forms:** React Hook Form + Zod
+- **HTTP:** Axios
+- **Export:** `@react-pdf/renderer` (PDF), `docx` (DOCX)
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/           # Login, register, forgot-password, verify-email
+│   ├── auth/callback/    # OAuth redirect handler
+│   ├── dashboard/        # Portfolio management dashboard
+│   ├── settings/         # Profile settings
+│   ├── u/[username]/     # Public portfolio page
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── robots.ts
+│   └── sitemap.ts
+├── components/
+│   ├── layout/           # Navbar
+│   └── ExportModal.tsx   # PDF / DOCX export dialog
+├── lib/
+│   ├── api.ts            # Axios instance
+│   └── export/
+│       ├── pdf-templates.tsx
+│       └── docx-export.ts
+├── services/             # API call functions per resource
+├── store/
+│   └── auth.store.ts     # Zustand auth store
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- API server running (see [root README](../../README.md))
+
+### Install and run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `apps/web/.env.local`:
 
-## Learn More
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Key Pages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Route | Description |
+|---|---|
+| `/` | Landing page |
+| `/register` | Sign up with email |
+| `/login` | Sign in (email, Google, GitHub) |
+| `/verify-email` | OTP email verification |
+| `/forgot-password` | Password reset flow |
+| `/dashboard` | Manage portfolio sections |
+| `/settings` | Update profile info |
+| `/u/[username]` | Public portfolio page |
+| `/auth/callback` | OAuth token handler |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Export
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Users can export their portfolio from the dashboard:
+
+- **PDF** — rendered with `@react-pdf/renderer`, downloads as `portfolio.pdf`
+- **DOCX** — generated with `docx`, downloads as `portfolio.docx`
+
+---
+
+## Build
+
+```bash
+npm run build
+npm run start
+```
+
+---
+
+## Linting
+
+```bash
+npm run lint
+```
