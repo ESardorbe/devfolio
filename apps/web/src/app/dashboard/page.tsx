@@ -16,22 +16,9 @@ import {
   Settings, ChevronRight, Star, Download,
 } from 'lucide-react';
 import { ExportModal } from '@/src/components/ExportModal';
+import { LEVEL_COLORS, LEVEL_LABELS } from '@/src/lib/constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
-
-const LEVEL_COLORS: Record<string, string> = {
-  BEGINNER: '#6366f1',
-  INTERMEDIATE: '#00ff88',
-  ADVANCED: '#06b6d4',
-  EXPERT: '#f59e0b',
-};
-
-const LEVEL_LABELS: Record<string, string> = {
-  BEGINNER: 'Boshlang\'ich',
-  INTERMEDIATE: 'O\'rta',
-  ADVANCED: 'Yuqori',
-  EXPERT: 'Ekspert',
-};
 
 type Tab = 'overview' | 'skills' | 'projects' | 'experience' | 'education' | 'certificates';
 
@@ -537,7 +524,7 @@ function ProjectsTab({ projects, onRefresh }: { projects: Project[]; onRefresh: 
     setShowForm(true);
   };
 
-  const isValidUrl = (val: string) => { try { new URL(val); return true; } catch { return false; } };
+  const isValidUrl = (val: string) => { try { return /^https?:$/.test(new URL(val).protocol); } catch { return false; } };
 
   const handleSubmit = async () => {
     setFormError('');

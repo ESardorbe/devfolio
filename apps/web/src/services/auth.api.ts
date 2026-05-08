@@ -40,6 +40,12 @@ export const authApi = {
   resetPassword: (resetToken: string, newPassword: string) =>
     api.post('/auth/reset-password', { resetToken, newPassword }) as Promise<{ message: string }>,
 
+  refresh: (refreshToken: string) =>
+    api.post('/auth/refresh', { refreshToken }) as Promise<{
+      accessToken: string;
+      refreshToken: string;
+    }>,
+
   changePassword: (oldPassword: string, newPassword: string) =>
     api.post('/auth/change-password', { oldPassword, newPassword }) as Promise<{ message: string }>,
 

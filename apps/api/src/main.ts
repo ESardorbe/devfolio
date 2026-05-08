@@ -1,13 +1,26 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { join } from 'path';
+import helmet from 'helmet';
+
+const logger = new Logger('Bootstrap');
+
+function validateEnv() {
+  const required = ['JWT_SECRET', 'DATABASE_URL'];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length) {
+    throw new Error(`Muhit o'zgaruvchilari topilmadi: ${missing.join(', ')}`);
+  }
+}
 
 async function bootstrap() {
+  validateEnv();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.use(helmet());
   app.setGlobalPrefix('api');
 
   // Static fayllar (avatar rasmlari)
@@ -39,7 +52,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4001;
   await app.listen(port);
-  console.log(`Server ishga tushdi: http://localhost:${port}/api`);
-  console.log(`Swagger: http://localhost:${port}/docs`);
+  logger.log(`Server ishga tushdi: http://localhost:${port}/api`);
+  logger.log(`Swagger: http://localhost:${port}/docs`);
 }
 bootstrap();

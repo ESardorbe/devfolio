@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -22,12 +23,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @ApiOperation({ summary: 'Ro\'yxatdan o\'tish — emailga OTP yuboriladi' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('verify-email')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Emailni OTP kod bilan tasdiqlash' })
   verifyEmail(@Body() dto: VerifyEmailDto) {
@@ -35,6 +38,7 @@ export class AuthController {
   }
 
   @Post('resend-otp')
+  @Throttle({ default: { ttl: 60_000, limit: 3 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'OTP kodni qayta yuborish' })
   resendOtp(@Body() dto: ResendOtpDto) {
@@ -42,6 +46,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Tizimga kirish' })
   login(@Body() dto: LoginDto) {
@@ -49,6 +54,7 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { ttl: 60_000, limit: 3 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '1-qadam: Parolni tiklash so\'rovi' })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -56,6 +62,7 @@ export class AuthController {
   }
 
   @Post('verify-reset-otp')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '2-qadam: Reset OTP kodni tekshirish' })
   verifyResetOtp(@Body() dto: VerifyResetOtpDto) {
@@ -67,6 +74,13 @@ export class AuthController {
   @ApiOperation({ summary: '3-qadam: Yangi parol o\'rnatish' })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Access token yangilash (refresh token bilan)' })
+  refresh(@Body('refreshToken') token: string) {
+    return this.authService.refreshToken(token);
   }
 
   @Post('change-password')

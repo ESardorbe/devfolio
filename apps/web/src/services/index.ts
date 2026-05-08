@@ -91,6 +91,7 @@ export const usersApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }) as Promise<any>;
   },
+  deleteAccount: () => api.delete('/users/me') as Promise<any>,
 };
 
 // ─── Skills API ───────────────────────────────────────────

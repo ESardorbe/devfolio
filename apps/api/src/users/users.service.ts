@@ -133,4 +133,10 @@ export class UsersService {
       select: { id: true, avatar: true },
     });
   }
+
+  // --- Hisobni o'chirish ---
+  async deleteAccount(userId: string) {
+    await this.prisma.user.delete({ where: { id: userId } });
+    return { message: 'Hisob muvaffaqiyatli o\'chirildi' };
+  }
 }

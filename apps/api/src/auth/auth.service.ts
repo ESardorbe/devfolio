@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 
 enum OtpType {
   EMAIL_VERIFY = 'EMAIL_VERIFY',
@@ -242,7 +243,7 @@ export class AuthService {
       where: { email, type, used: false },
     });
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await this.prisma.otpCode.create({
@@ -263,6 +264,19 @@ export class AuthService {
     if (otp.expiresAt < new Date()) throw new BadRequestException('Kod muddati o\'tgan');
 
     return otp;
+  }
+
+  // ─── 11. Refresh token ────────────────────────────────────────
+  async refreshToken(token: string) {
+    let payload: any;
+    try {
+      payload = this.jwt.verify(token, { secret: process.env.JWT_REFRESH_SECRET });
+    } catch {
+      throw new UnauthorizedException('Refresh token yaroqsiz yoki muddati o\'tgan');
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) throw new UnauthorizedException('Foydalanuvchi topilmadi');
+    return this.generateTokens(user);
   }
 
   // ─── Yordamchi: Token yaratish ─────────────────────────────

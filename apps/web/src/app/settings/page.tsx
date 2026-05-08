@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/src/store/auth.store';
 import { Navbar } from '@/src/components/layout/Navbar';
 import { usersApi } from '@/src/services';
-import { Save, ArrowLeft, Eye, EyeOff, Camera } from 'lucide-react';
+import { Save, ArrowLeft, Eye, EyeOff, Camera, Trash2 } from 'lucide-react';
 import { authApi } from '@/src/services/auth.api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
@@ -150,13 +150,26 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Hisobingizni o\'chirishni tasdiqlaysizmi? Bu amalni qaytarib bo\'lmaydi.')) return;
+    setLoading(true); setError('');
+    try {
+      await usersApi.deleteAccount();
+      localStorage.clear();
+      router.push('/');
+    } catch (err: any) {
+      setError(err?.message || 'Hisobni o\'chirishda xato yuz berdi');
+      setLoading(false);
+    }
+  };
+
   const handleChangePassword = async () => {
     if (passwords.newPassword !== passwords.confirmPassword) {
       setError('Parollar mos kelmaydi'); return;
     }
     setLoading(true); setError(''); setSaved(false);
     try {
-      await authApi.changePassword?.(passwords.oldPassword, passwords.newPassword);
+      await authApi.changePassword(passwords.oldPassword, passwords.newPassword);
       setSaved(true);
       setPasswords({ oldPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => setSaved(false), 3000);
@@ -403,6 +416,15 @@ export default function SettingsPage() {
                 <button onClick={handleChangePassword} className="btn-primary" disabled={loading} style={{ alignSelf: 'flex-start', fontSize: '13px' }}>
                   <Save size={14} />
                   {loading ? 'Saqlanmoqda...' : 'Parolni o\'zgartirish'}
+                </button>
+              </div>
+
+              <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', color: '#ff6b6b' }}>Xavfli zona</h2>
+                <p style={{ fontSize: '13px', color: 'var(--text2)', marginBottom: '16px' }}>Hisobni o'chirsangiz, barcha ma'lumotlaringiz butunlay yo'qoladi. Bu amalni qaytarib bo'lmaydi.</p>
+                <button onClick={handleDeleteAccount} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: '8px', color: '#ff6b6b', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  <Trash2 size={14} />
+                  Hisobni o'chirish
                 </button>
               </div>
             </div>

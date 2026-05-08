@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Body, Param, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Body, Param, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
@@ -66,6 +66,15 @@ export class UsersController {
   @ApiOperation({ summary: 'Profil ko\'rishlar statistikasi' })
   getViews(@CurrentUser() userId: string) {
     return this.usersService.getProfileViews(userId);
+  }
+
+  // DELETE /users/me — hisobni o'chirish
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'O\'z hisobini o\'chirish' })
+  deleteAccount(@CurrentUser() userId: string) {
+    return this.usersService.deleteAccount(userId);
   }
 
   // POST /users/me/avatar — avatar yuklash
