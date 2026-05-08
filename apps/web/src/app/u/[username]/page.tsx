@@ -78,7 +78,7 @@ export default function PublicProfilePage() {
             <div style={{
               width: '96px', height: '96px', borderRadius: '50%', flexShrink: 0,
               background: profile.avatar
-                ? `url(${profile.avatar.startsWith('http') ? profile.avatar : `${API_URL}${profile.avatar}`}) center/cover`
+                ? `url(${profile.avatar.startsWith('http') ? profile.avatar : `${API_URL}${profile.avatar}`}) center/cover no-repeat`
                 : 'var(--surface2)',
               border: '3px solid var(--accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

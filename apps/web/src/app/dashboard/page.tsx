@@ -121,7 +121,7 @@ export default function DashboardPage() {
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
                 background: user.avatar
-                  ? `url(${user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`}) center/cover`
+                  ? `url(${user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`}) center/cover no-repeat`
                   : 'var(--surface2)',
                 border: '2px solid var(--accent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

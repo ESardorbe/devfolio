@@ -235,7 +235,7 @@ export default function SettingsPage() {
                 <div style={{ position: 'relative' }}>
                   <div style={{
                     width: '80px', height: '80px', borderRadius: '50%',
-                    background: avatarSrc ? `url(${avatarSrc}) center/cover` : 'var(--surface2)',
+                    background: avatarSrc ? `url(${avatarSrc}) center/cover no-repeat` : 'var(--surface2)',
                     border: '2px solid var(--border2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '28px', flexShrink: 0,

@@ -20,7 +20,11 @@ async function bootstrap() {
   validateEnv();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.setGlobalPrefix('api');
 
   // Static fayllar (avatar rasmlari)
