@@ -4,6 +4,64 @@ import Link from 'next/link';
 import { Navbar } from '@/src/components/layout/Navbar';
 import { GitBranch, Link2, Send, MapPin, Star, ExternalLink } from 'lucide-react';
 
+const PAGE_STYLES = `
+  .section-pad {
+    padding: 100px 48px;
+    position: relative;
+    z-index: 1;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .cta-section {
+    padding: 80px 48px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-card {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 64px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .footer-bar {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  @media (max-width: 1023px) {
+    .section-pad { padding: 80px 32px; }
+    .cta-section { padding: 60px 32px; }
+    .footer-bar  { padding: 28px 32px; }
+  }
+  @media (max-width: 767px) {
+    .section-pad   { padding: 60px 20px; }
+    .steps-grid    { grid-template-columns: 1fr; gap: 28px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .cta-section   { padding: 48px 16px; }
+    .cta-card      { padding: 40px 24px; }
+    .footer-bar    { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+  }
+`;
+
 // ─── Mock profile for preview section ─────────────────────
 const MOCK = {
   name: 'Asilbek Nazarov',
@@ -49,6 +107,7 @@ const LEVEL_DOT: Record<string, string> = {
 export default function HomePage() {
   return (
     <>
+      <style>{PAGE_STYLES}</style>
       <Navbar />
 
       {/* ── Hero ── */}
@@ -130,7 +189,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" style={{ padding: '100px 48px', position: 'relative', zIndex: 1 }}>
+      <section id="features" className="section-pad">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', marginBottom: '12px' }}>IMKONIYATLAR</p>
@@ -165,7 +224,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Preview ── */}
-      <section id="preview" style={{ padding: '100px 48px', position: 'relative', zIndex: 1 }}>
+      <section id="preview" className="section-pad">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', marginBottom: '12px' }}>NAMUNA</p>
@@ -234,7 +293,7 @@ export default function HomePage() {
               {/* Projects */}
               <div>
                 <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>🚀 Loyihalar</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="projects-grid">
                   {MOCK.projects.map(p => (
                     <div key={p.title} className="card" style={{ padding: '16px' }}>
                       {p.featured && (
@@ -273,7 +332,7 @@ export default function HomePage() {
       </section>
 
       {/* ── How it works ── */}
-      <section style={{ padding: '100px 48px', position: 'relative', zIndex: 1 }}>
+      <section className="section-pad">
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', marginBottom: '12px' }}>QANDAY ISHLAYDI</p>
@@ -282,7 +341,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
+          <div className="steps-grid">
             {[
               { step: '01', title: 'Ro\'yxatdan o\'ting', desc: 'GitHub yoki Google bilan 30 soniyada. Email tasdiqlash ham yo\'q.', icon: '🔐' },
               { step: '02', title: 'Ma\'lumot kiriting', desc: 'Loyihalar, ko\'nikmalar, tajriba — hammasini qulay dashboard orqali.', icon: '✏️' },
@@ -302,8 +361,8 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA Bottom ── */}
-      <section style={{ padding: '80px 48px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto', padding: '64px 40px', background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: '20px', position: 'relative', overflow: 'hidden' }}>
+      <section className="cta-section">
+        <div className="cta-card">
           <div style={{ position: 'absolute', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(0,255,136,0.07) 0%, transparent 70%)', top: '-100px', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }} />
           <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', marginBottom: '16px' }}>HOZIROQ BOSHLANG</p>
           <h2 style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '14px', lineHeight: 1.15 }}>
@@ -319,7 +378,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '32px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1, flexWrap: 'wrap', gap: '16px' }}>
+      <footer className="footer-bar">
         <span style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 700 }}>
           Dev<span style={{ color: 'var(--accent)' }}>Folio</span>
         </span>

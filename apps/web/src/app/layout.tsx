@@ -34,13 +34,18 @@ export const metadata: Metadata = {
     siteName: 'DevFolio',
     title: "DevFolio — IT Mutaxassislari Uchun Portfolio",
     description: "O'zbekistonlik dasturchilar uchun zamonaviy portfolio platforma",
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'DevFolio' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'DevFolio',
     description: "IT mutaxassislari uchun portfolio platforma",
-    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [{ url: '/icon', sizes: '512x512', type: 'image/png' }],
   },
   robots: {
     index: true,
@@ -60,7 +65,20 @@ export default function RootLayout({
   return (
     <html lang="uz" className={`${sora.variable} ${spaceMono.variable}`}>
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'DevFolio',
+              url: 'https://devfolio.uz',
+              logo: 'https://devfolio.uz/icon',
+              description:
+                "O'zbekistonlik dasturchilar va IT mutaxassislar uchun zamonaviy portfolio platforma.",
+            }),
+          }}
+        />
       </head>
       <body>
         <Providers>{children}</Providers>
