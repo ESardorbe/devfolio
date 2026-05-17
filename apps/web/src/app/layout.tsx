@@ -42,6 +42,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon', type: 'image/png', sizes: '512x512' },
     ],
@@ -65,6 +66,8 @@ export default function RootLayout({
   return (
     <html lang="uz" className={`${sora.variable} ${spaceMono.variable}`}>
       <head>
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
