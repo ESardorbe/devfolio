@@ -52,6 +52,12 @@ const PAGE_STYLES = `
     .cta-section { padding: 60px 32px; }
     .footer-bar  { padding: 28px 32px; }
   }
+  .hero-stats {
+    display: flex;
+    gap: 56px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
   @media (max-width: 767px) {
     .section-pad   { padding: 60px 20px; }
     .steps-grid    { grid-template-columns: 1fr; gap: 28px; }
@@ -59,6 +65,8 @@ const PAGE_STYLES = `
     .cta-section   { padding: 48px 16px; }
     .cta-card      { padding: 40px 24px; }
     .footer-bar    { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    .hero-stats    { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; }
+    .hero-stats > div { text-align: center; }
   }
 `;
 
@@ -170,7 +178,7 @@ export default function HomePage() {
         </div>
 
         {/* Stats */}
-        <div className="animate-fade-up-4" style={{ display: 'flex', gap: '56px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="animate-fade-up-4 hero-stats">
           {[
             { num: '3 daqiqa', label: 'PORTFOLIO YARATISH VAQTI' },
             { num: '100%', label: 'BEPUL' },
@@ -379,7 +387,8 @@ export default function HomePage() {
 
       {/* ── Footer ── */}
       <footer className="footer-bar">
-        <span style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 700 }}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src="/logo.svg" width="24" height="24" alt="DevFolio logo" style={{ display: 'block', flexShrink: 0 }} />
           Dev<span style={{ color: 'var(--accent)' }}>Folio</span>
         </span>
         <p style={{ fontSize: '12px', color: 'var(--text3)' }}>

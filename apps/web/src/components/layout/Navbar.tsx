@@ -118,7 +118,8 @@ export function Navbar() {
       `}</style>
 
       <nav className="navbar">
-        <Link href="/" style={{ textDecoration: 'none' }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/logo.svg" width="28" height="28" alt="DevFolio logo" style={{ display: 'block', flexShrink: 0 }} />
           <span style={{ fontFamily: 'var(--mono)', fontSize: '18px', fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text)' }}>
             Dev<span style={{ color: 'var(--accent)' }}>Folio</span>
           </span>
