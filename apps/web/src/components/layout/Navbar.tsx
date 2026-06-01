@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/src/store/auth.store';
-import { User, LogOut, LayoutDashboard, Menu, X } from 'lucide-react';
+import { useTheme } from '@/src/hooks/useTheme';
+import { User, LogOut, LayoutDashboard, Menu, X, Sun, Moon } from 'lucide-react';
 
 const NAV_LINKS = [
   { href: '/#features', label: 'Imkoniyatlar' },
@@ -12,6 +13,7 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const { user, logout, isAuthenticated } = useAuthStore();
+  const { theme, toggle } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -35,9 +37,13 @@ export function Navbar() {
           grid-template-columns: 1fr auto 1fr;
           align-items: center;
           padding: 20px 48px;
-          background: rgba(10,10,15,0.85);
+          background: rgba(var(--navbar-bg, 10,10,15), 0.85);
           backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--border);
+          transition: background 0.3s, border-color 0.3s;
+        }
+        [data-theme="light"] .navbar {
+          background: rgba(242,242,248,0.88);
         }
         .navbar-links {
           display: flex;
@@ -75,6 +81,9 @@ export function Navbar() {
           gap: 4px;
           z-index: 99;
         }
+        [data-theme="light"] .navbar-mobile {
+          background: rgba(242,242,248,0.98);
+        }
         .navbar-mobile.open { display: flex; }
         .navbar-mobile-link {
           color: var(--text2);
@@ -97,23 +106,41 @@ export function Navbar() {
           flex-direction: column;
           gap: 8px;
         }
+        .theme-btn {
+          background: none;
+          border: 1px solid var(--border2);
+          color: var(--text2);
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          flex-shrink: 0;
+        }
+        .theme-btn:hover {
+          border-color: var(--accent);
+          color: var(--accent);
+        }
 
-        /* Tablet */
         @media (max-width: 1023px) {
           .navbar { padding: 16px 24px; }
           .navbar-links { gap: 20px; }
           .navbar-auth { gap: 8px; }
         }
-
-        /* Mobile */
-        @media (max-width: 767px) {
+        @media (max-width: 900px) {
           .navbar {
             grid-template-columns: 1fr auto;
-            padding: 14px 16px;
+            padding: 14px 20px;
           }
           .navbar-links { display: none; }
           .navbar-auth { display: none; }
           .navbar-hamburger { display: flex; }
+        }
+        @media (max-width: 480px) {
+          .navbar { padding: 12px 16px; }
         }
       `}</style>
 
@@ -141,6 +168,11 @@ export function Navbar() {
         </ul>
 
         <div className="navbar-auth">
+          {mounted && (
+            <button onClick={toggle} className="theme-btn" title={theme === 'dark' ? 'Kunduzgi rejim' : 'Tungi rejim'}>
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+          )}
           {!mounted ? null : isAuthenticated() ? (
             <>
               <Link href="/dashboard" className="btn-ghost" style={{ textDecoration: 'none' }}>
@@ -166,7 +198,6 @@ export function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile menu */}
       <div className={`navbar-mobile ${menuOpen ? 'open' : ''}`}>
         {NAV_LINKS.map((link) => (
           <Link key={link.href} href={link.href as any} className="navbar-mobile-link" onClick={close}>
@@ -175,6 +206,16 @@ export function Navbar() {
         ))}
         <div className="navbar-mobile-divider" />
         <div className="navbar-mobile-btns">
+          {mounted && (
+            <button
+              onClick={() => { toggle(); close(); }}
+              className="btn-ghost"
+              style={{ justifyContent: 'flex-start', gap: '8px' }}
+            >
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              {theme === 'dark' ? 'Kunduzgi rejim' : 'Tungi rejim'}
+            </button>
+          )}
           {!mounted ? null : isAuthenticated() ? (
             <>
               <Link href="/dashboard" className="btn-ghost" onClick={close} style={{ textDecoration: 'none' }}>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Space_Mono, Sora } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { ParticleBackground } from '@/src/components/ParticleBackground';
 
 const sora = Sora({
   subsets: ['latin'],
@@ -66,6 +67,7 @@ export default function RootLayout({
   return (
     <html lang="uz" className={`${sora.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('devfolio-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();` }} />
         <link rel="icon" href="/logo.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <script
@@ -85,6 +87,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
+        <ParticleBackground />
         <Providers>{children}</Providers>
       </body>
     </html>

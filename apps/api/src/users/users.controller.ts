@@ -2,6 +2,7 @@ import { Controller, Get, Put, Post, Delete, Body, Param, Req, UseGuards, UseInt
 import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { JwtService } from '@nestjs/jwt';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -14,7 +15,10 @@ import { existsSync, mkdirSync } from 'fs';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   // GET /users/me — o'z to'liq profili
   @Get('me')
@@ -40,10 +44,24 @@ export class UsersController {
     @Req() req: Request,
   ) {
     const profile = await this.usersService.getPublicProfile(username);
-    this.usersService.recordProfileView(profile.id, {
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    }).catch(() => {});
+
+    // Don't count view if the profile owner is viewing their own profile
+    let viewerId: string | undefined;
+    const auth = req.headers.authorization;
+    if (auth?.startsWith('Bearer ')) {
+      try {
+        const payload: any = this.jwtService.verify(auth.replace('Bearer ', ''));
+        viewerId = payload?.sub;
+      } catch {}
+    }
+
+    if (viewerId !== profile.id) {
+      this.usersService.recordProfileView(profile.id, {
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      }).catch(() => {});
+    }
+
     return profile;
   }
 

@@ -1,25 +1,55 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --bg: #0a0a0f;
-    --bg2: #111118;
-    --bg3: #16161f;
-    --surface: #1c1c28;
-    --surface2: #22222f;
-    --border: rgba(255, 255, 255, 0.07);
-    --border2: rgba(255, 255, 255, 0.12);
-    --accent: #00ff88;
-    --accent2: #7c3aed;
-    --accent3: #06b6d4;
-    --text: #f0f0f8;
-    --text2: #9090a8;
-    --text3: #5a5a72;
-    --mono: 'Space Mono', monospace;
-    --sans: 'Sora', sans-serif;
-    --r: 12px;
-  }
+/* ── Dark theme (default) ──────────────────────────────────── */
+:root,
+html:not([data-theme="light"]) {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #16161f;
+  --surface: #1c1c28;
+  --surface2: #22222f;
+  --border: rgba(255, 255, 255, 0.07);
+  --border2: rgba(255, 255, 255, 0.12);
+  --accent: #00ff88;
+  --accent2: #7c3aed;
+  --accent3: #06b6d4;
+  --text: #f0f0f8;
+  --text2: #9090a8;
+  --text3: #5a5a72;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Sora', sans-serif;
+  --r: 12px;
+}
 
+/* ── Light theme ───────────────────────────────────────────── */
+html[data-theme="light"] {
+  --bg: #f0f2f8;
+  --bg2: #e4e6f0;
+  --bg3: #d8daea;
+  --surface: #ffffff;
+  --surface2: #f5f6fc;
+  --border: rgba(0, 0, 0, 0.09);
+  --border2: rgba(0, 0, 0, 0.16);
+  --accent: #00c96e;
+  --accent2: #6d28d9;
+  --accent3: #0891b2;
+  --text: #0d0d1c;
+  --text2: #4a4a6e;
+  --text3: #8888aa;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Sora', sans-serif;
+  --r: 12px;
+}
+
+html[data-theme="light"] body {
+  background: linear-gradient(145deg, #f4f5fc 0%, #f0f2f8 55%, #eceef6 100%) !important;
+}
+
+html[data-theme="light"] body::before {
+  opacity: 0.08 !important;
+}
+
+@layer base {
   * {
     margin: 0;
     padding: 0;
@@ -37,6 +67,7 @@
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.35s ease, color 0.35s ease;
   }
 
   /* Noise texture */
@@ -48,6 +79,7 @@
     pointer-events: none;
     z-index: 0;
     opacity: 0.4;
+    transition: opacity 0.35s ease;
   }
 
   ::selection {
