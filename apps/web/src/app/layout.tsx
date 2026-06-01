@@ -41,14 +41,6 @@ export const metadata: Metadata = {
     title: 'DevFolio',
     description: "IT mutaxassislari uchun portfolio platforma",
   },
-  icons: {
-    icon: [
-      { url: '/logo.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon', type: 'image/png', sizes: '512x512' },
-    ],
-    apple: [{ url: '/icon', sizes: '512x512', type: 'image/png' }],
-  },
   robots: {
     index: true,
     follow: true,
@@ -68,9 +60,7 @@ export default function RootLayout({
     <html lang="uz" className={`${sora.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('devfolio-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();` }} />
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <script
+<script
           type="application/ld+json"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{

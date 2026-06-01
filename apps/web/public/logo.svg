@@ -1,4 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
-  <rect width="40" height="40" rx="10" fill="#00ff88"/>
-  <text x="20" y="29" text-anchor="middle" font-family="'Courier New', monospace" font-size="26" font-weight="700" fill="#0a0a0f">D</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 100" fill="none">
+  <defs>
+    <mask id="m">
+      <rect width="130" height="100" fill="white"/>
+      <path d="M4 30 Q4 22 12 22 L36 22 L48 34 L100 34 Q108 34 108 42 L108 88 Q108 96 100 96 L12 96 Q4 96 4 88 Z" fill="black"/>
+    </mask>
+  </defs>
+  <g mask="url(#m)">
+    <path d="M58 5 L106 5 L122 19 L122 80 Q122 86 116 86 L64 86 Q58 86 58 80 Z"
+          stroke="#00ff88" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M106 5 L106 21 L122 21" stroke="#00ff88" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <path d="M4 30 Q4 22 12 22 L36 22 L48 34 L100 34 Q108 34 108 42 L108 88 Q108 96 100 96 L12 96 Q4 96 4 88 Z"
+        stroke="#00ff88" stroke-width="4" stroke-linejoin="round"/>
+  <text x="56" y="67" text-anchor="middle" font-family="'Courier New',monospace" font-size="20" font-weight="700" fill="#00ff88">&lt;/&gt;</text>
+  <path d="M56 70 L56 79 M49 74.5 L56 81.5 L63 74.5" stroke="#00ff88" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
