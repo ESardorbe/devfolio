@@ -11,11 +11,11 @@ html:not([data-theme="light"]) {
   --border: rgba(255, 255, 255, 0.07);
   --border2: rgba(255, 255, 255, 0.12);
   --accent: #00ff88;
-  --accent2: #7c3aed;
+  --accent2: #a78bfa;
   --accent3: #06b6d4;
   --text: #f0f0f8;
   --text2: #9090a8;
-  --text3: #5a5a72;
+  --text3: #8080a8;
   --mono: 'Space Mono', monospace;
   --sans: 'Sora', sans-serif;
   --r: 12px;
@@ -23,11 +23,11 @@ html:not([data-theme="light"]) {
 
 /* ── Light theme ───────────────────────────────────────────── */
 html[data-theme="light"] {
-  --bg: #f0f2f8;
-  --bg2: #e4e6f0;
-  --bg3: #d8daea;
-  --surface: #ffffff;
-  --surface2: #f5f6fc;
+  --bg: #e8eaf4;
+  --bg2: #dddff0;
+  --bg3: #d2d4e8;
+  --surface: #f4f5fb;
+  --surface2: #eceef8;
   --border: rgba(0, 0, 0, 0.09);
   --border2: rgba(0, 0, 0, 0.16);
   --accent: #00c96e;
@@ -35,14 +35,14 @@ html[data-theme="light"] {
   --accent3: #0891b2;
   --text: #0d0d1c;
   --text2: #4a4a6e;
-  --text3: #8888aa;
+  --text3: #5a5a7a;
   --mono: 'Space Mono', monospace;
   --sans: 'Sora', sans-serif;
   --r: 12px;
 }
 
 html[data-theme="light"] body {
-  background: linear-gradient(145deg, #f4f5fc 0%, #f0f2f8 55%, #eceef6 100%) !important;
+  background: linear-gradient(145deg, #eceef8 0%, #e8eaf4 55%, #e4e6f2 100%) !important;
 }
 
 html[data-theme="light"] body::before {
@@ -257,8 +257,8 @@ html[data-theme="light"] body::before {
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes pulse-dot {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.5); }
-    50%       { box-shadow: 0 0 0 5px rgba(0, 255, 136, 0); }
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.4); opacity: 0.5; }
   }
 
   .animate-fade-up { animation: fadeUp 0.6s ease both; }

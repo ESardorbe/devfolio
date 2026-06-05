@@ -11,26 +11,29 @@ function CallbackContent() {
   const { setAuth } = useAuthStore();
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    const code = searchParams.get('code');
 
-    if (!token) {
+    if (!code) {
       router.push('/login');
       return;
     }
 
-    // Token ni saqlab, foydalanuvchi ma'lumotlarini olamiz
-    localStorage.setItem('accessToken', token);
+    (async () => {
+      try {
+        const tokensData: any = await authApi.exchangeOauthCode(code);
+        const { accessToken, refreshToken } = tokensData.data ?? tokensData;
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
 
-    authApi.getMe()
-      .then((res: any) => {
-        const user = res.data || res;
-        setAuth(user, token);
+        const meRes: any = await authApi.getMe();
+        const user = meRes.data || meRes;
+        setAuth(user, accessToken);
         router.push('/dashboard');
-      })
-      .catch(() => {
+      } catch {
         localStorage.removeItem('accessToken');
         router.push('/login');
-      });
+      }
+    })();
   }, []);
 
   return (

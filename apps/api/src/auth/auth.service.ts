@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
-import { randomInt } from 'crypto';
+import { randomInt, randomBytes } from 'crypto';
 
 enum OtpType {
   EMAIL_VERIFY = 'EMAIL_VERIFY',
@@ -15,6 +15,8 @@ enum OtpType {
 
 @Injectable()
 export class AuthService {
+  private readonly oauthCodes = new Map<string, { tokens: { accessToken: string; refreshToken: string }; expiresAt: number }>();
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -289,5 +291,27 @@ export class AuthService {
         expiresIn: '30d',
       }),
     };
+  }
+
+  // ─── OAuth one-time code saqlash (5 daqiqa) ───────────────
+  storeOauthCode(tokens: { accessToken: string; refreshToken: string }): string {
+    const code = randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    this.oauthCodes.set(code, { tokens, expiresAt });
+    // Eskirgan kodlarni tozalash
+    for (const [k, v] of this.oauthCodes) {
+      if (v.expiresAt < Date.now()) this.oauthCodes.delete(k);
+    }
+    return code;
+  }
+
+  // ─── OAuth one-time code almashtirish ─────────────────────
+  exchangeOauthCode(code: string): { accessToken: string; refreshToken: string } {
+    const entry = this.oauthCodes.get(code);
+    this.oauthCodes.delete(code);
+    if (!entry || entry.expiresAt < Date.now()) {
+      throw new UnauthorizedException('OAuth kodi yaroqsiz yoki muddati o\'tgan');
+    }
+    return entry.tokens;
   }
 }

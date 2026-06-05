@@ -3,6 +3,18 @@ import OpenAI from 'openai';
 
 export async function POST(req: Request) {
   try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const apiBase = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+    const verifyRes = await fetch(`${apiBase}/auth/me`, {
+      headers: { Authorization: authHeader },
+    });
+    if (!verifyRes.ok) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(

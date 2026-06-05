@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
+import { ConfirmModal } from './ConfirmModal';
 import { useAuthStore } from '@/src/store/auth.store';
 import { useUIStore } from '@/src/store/ui.store';
 import { usersApi, skillsApi, experiencesApi, educationsApi, projectsApi } from '@/src/services';
 import { authApi } from '@/src/services/auth.api';
+import { getCroppedImg } from '@/src/lib/cropImage';
 import {
   X, Save, Camera, Trash2, Eye, EyeOff,
   User, Link2, Shield, Sparkles, Loader2, Send,
+  RotateCcw, RotateCw,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
@@ -428,6 +433,13 @@ export function SettingsModal() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const [profile, setProfile] = useState({
     name: '', username: '', headline: '', bio: '',
@@ -447,6 +459,7 @@ export function SettingsModal() {
   const [showPwd, setShowPwd] = useState(false);
 
   const [generatingBio, setGeneratingBio] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // Populate form when modal opens
   useEffect(() => {
@@ -503,26 +516,59 @@ export function SettingsModal() {
     return () => { document.body.style.overflow = ''; };
   }, [settingsOpen]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarPreview(URL.createObjectURL(file));
-    setAvatarUploading(true);
+    setCropSrc(URL.createObjectURL(file));
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+    setCropOpen(true);
+    e.target.value = '';
+  };
+
+  const onCropComplete = useCallback((_: any, pixels: any) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
+
+  const handleCropDone = async () => {
+    if (!cropSrc || !croppedAreaPixels) return;
     try {
-      const res = await usersApi.uploadAvatar(file);
-      const updated = res?.data || res;
-      if (updated?.avatar) setUser({ ...user!, avatar: updated.avatar });
+      const file = await getCroppedImg(cropSrc, croppedAreaPixels, rotation);
+      setPendingAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
     } catch {
-      setError('Avatar yuklanmadi');
-      setAvatarPreview(null);
-    } finally {
-      setAvatarUploading(false);
+      setError('Rasmni kesib bo\'lmadi');
     }
+    setCropOpen(false);
+    setCropSrc(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropOpen(false);
+    setCropSrc(null);
   };
 
   const handleSave = async () => {
     setSaving(true); setError(''); setSaved(false);
     try {
+      if (pendingAvatarFile) {
+        setAvatarUploading(true);
+        try {
+          const avatarRes = await usersApi.uploadAvatar(pendingAvatarFile);
+          const avatarUpdated = avatarRes?.data || avatarRes;
+          if (avatarUpdated?.avatar) setUser({ ...user!, avatar: avatarUpdated.avatar });
+          setPendingAvatarFile(null);
+        } catch {
+          setError('Avatar yuklanmadi');
+          setAvatarPreview(null);
+          setPendingAvatarFile(null);
+          return;
+        } finally {
+          setAvatarUploading(false);
+        }
+      }
+
       const phone = phoneDigits.trim() ? `${phoneCountry.dial}${phoneDigits.trim()}` : undefined;
       const payload = {
         ...profile,
@@ -564,8 +610,12 @@ export function SettingsModal() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Hisobingizni o'chirishni tasdiqlaysizmi? Bu amalni qaytarib bo'lmaydi.")) return;
+  const handleDeleteAccount = () => {
+    setDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setDeleteConfirm(false);
     setSaving(true);
     try {
       await usersApi.deleteAccount();
@@ -593,9 +643,13 @@ export function SettingsModal() {
       const educations = eduRes?.data        ?? eduRes        ?? [];
       const projects   = projRes?.data       ?? projRes       ?? [];
 
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
       const res = await fetch('/api/generate-bio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           name: profile.name,
           headline: profile.headline,
@@ -621,6 +675,97 @@ export function SettingsModal() {
 
   if (!settingsOpen || !user) return null;
 
+  if (cropOpen && cropSrc) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.88)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}>
+        <div style={{
+          background: 'var(--surface)', borderRadius: '16px',
+          padding: '24px', width: '100%', maxWidth: '480px',
+          display: 'flex', flexDirection: 'column', gap: '20px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 700 }}>Rasmni tahrirlang</h2>
+            <button onClick={handleCropCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text2)' }}>
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Crop area */}
+          <div style={{ position: 'relative', width: '100%', height: '320px', borderRadius: '12px', overflow: 'hidden', background: '#000' }}>
+            <Cropper
+              image={cropSrc}
+              crop={crop}
+              zoom={zoom}
+              rotation={rotation}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+
+          {/* Zoom */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text2)' }}>Zoom</label>
+            <input
+              type="range" min={1} max={3} step={0.05} value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--accent)' }}
+            />
+          </div>
+
+          {/* Rotation */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text2)' }}>Burish ({rotation}°)</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => setRotation(r => r - 90)}
+                style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border2)', background: 'var(--surface2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--text2)', fontSize: '13px' }}
+              >
+                <RotateCcw size={14} /> Chapga
+              </button>
+              <input
+                type="range" min={-180} max={180} step={1} value={rotation}
+                onChange={(e) => setRotation(Number(e.target.value))}
+                style={{ flex: 2, accentColor: 'var(--accent)' }}
+              />
+              <button
+                onClick={() => setRotation(r => r + 90)}
+                style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border2)', background: 'var(--surface2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--text2)', fontSize: '13px' }}
+              >
+                O'ngga <RotateCw size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleCropCancel}
+              style={{ flex: 1, padding: '11px', borderRadius: '10px', border: '1px solid var(--border2)', background: 'transparent', cursor: 'pointer', color: 'var(--text2)', fontSize: '14px' }}
+            >
+              Bekor qilish
+            </button>
+            <button
+              onClick={handleCropDone}
+              className="btn-primary"
+              style={{ flex: 2, padding: '11px', justifyContent: 'center', fontSize: '14px' }}
+            >
+              Tayyor →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const avatarSrc = avatarPreview
     || (user.avatar
       ? (user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`)
@@ -641,6 +786,14 @@ export function SettingsModal() {
 
   return (
     <>
+      <ConfirmModal
+        open={deleteConfirm}
+        title="Hisobni o'chirish"
+        message="Barcha ma'lumotlaringiz butunlay yo'qoladi. Bu amalni qaytarib bo'lmaydi."
+        confirmLabel="Ha, o'chirish"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirm(false)}
+      />
       <style>{SM_STYLES}</style>
       {/* Overlay */}
       <div

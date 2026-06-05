@@ -50,4 +50,10 @@ export const authApi = {
     api.post('/auth/change-password', { oldPassword, newPassword }) as Promise<{ message: string }>,
 
   getMe: () => api.get('/auth/me') as Promise<any>,
+
+  exchangeOauthCode: (code: string) =>
+    api.get(`/auth/oauth/exchange?code=${encodeURIComponent(code)}`) as Promise<{
+      accessToken: string;
+      refreshToken: string;
+    }>,
 };

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Space_Mono, Sora } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
-import { ParticleBackground } from '@/src/components/ParticleBackground';
+import { ParticleBackgroundWrapper } from '@/src/components/ParticleBackgroundWrapper';
 
 const sora = Sora({
   subsets: ['latin'],
@@ -77,7 +77,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <ParticleBackground />
+        <ParticleBackgroundWrapper />
         <Providers>{children}</Providers>
       </body>
     </html>

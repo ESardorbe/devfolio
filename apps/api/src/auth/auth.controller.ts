@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, Body, UseGuards,
+  Controller, Post, Get, Body, Query, UseGuards,
   HttpCode, HttpStatus, Req, Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -120,9 +120,8 @@ export class AuthController {
       username: req.user.username,
       accessToken: req.user.accessToken,
     });
-    // Frontend ga token bilan redirect
-    const url = `${process.env.FRONTEND_URL}/auth/callback?token=${tokens.accessToken}`;
-    return res.redirect(url);
+    const code = this.authService.storeOauthCode(tokens);
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/callback?code=${code}`);
   }
 
   // ── Google OAuth ────────────────────────────────────────────
@@ -143,7 +142,15 @@ export class AuthController {
       name: req.user.name,
       avatar: req.user.avatar,
     });
-    const url = `${process.env.FRONTEND_URL}/auth/callback?token=${tokens.accessToken}`;
-    return res.redirect(url);
+    const code = this.authService.storeOauthCode(tokens);
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/callback?code=${code}`);
+  }
+
+  // ── OAuth code → tokens ─────────────────────────────────────
+  @Get('oauth/exchange')
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @ApiOperation({ summary: 'OAuth one-time kodni tokenga almashtirish' })
+  exchangeOauthCode(@Query('code') code: string) {
+    return this.authService.exchangeOauthCode(code);
   }
 }

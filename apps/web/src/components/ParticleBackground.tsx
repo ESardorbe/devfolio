@@ -15,39 +15,70 @@ const BLOB_STYLES = `
   .light-blob {
     position: fixed;
     border-radius: 50%;
-    filter: blur(60px);
+    filter: blur(70px);
     pointer-events: none;
     z-index: 0;
     opacity: 0;
     transition: opacity 0.7s ease;
   }
   html[data-theme="light"] .light-blob { opacity: 1; }
-  html[data-theme="light"] canvas.particle-bg { opacity: 0.60 !important; }
+  html[data-theme="light"] canvas.particle-bg { opacity: 0.35 !important; }
 
   .light-blob-1 {
-    width: 580px; height: 580px;
-    top: -160px; left: -110px;
-    background: radial-gradient(circle, rgba(79,70,229,0.38) 0%, rgba(99,102,241,0.12) 45%, transparent 70%);
+    width: 560px; height: 560px;
+    top: -140px; left: -100px;
+    background: radial-gradient(circle, rgba(79,70,229,0.20) 0%, rgba(99,102,241,0.07) 45%, transparent 70%);
     animation: lb1 20s ease-in-out infinite alternate;
   }
   .light-blob-2 {
-    width: 500px; height: 500px;
-    bottom: -110px; right: -90px;
-    background: radial-gradient(circle, rgba(16,185,129,0.30) 0%, rgba(5,150,105,0.10) 45%, transparent 70%);
+    width: 480px; height: 480px;
+    bottom: -100px; right: -80px;
+    background: radial-gradient(circle, rgba(16,185,129,0.16) 0%, rgba(5,150,105,0.05) 45%, transparent 70%);
     animation: lb2 24s ease-in-out infinite alternate;
   }
   .light-blob-3 {
-    width: 420px; height: 420px;
+    width: 400px; height: 400px;
     top: 32%; right: 4%;
-    background: radial-gradient(circle, rgba(6,182,212,0.26) 0%, rgba(14,165,233,0.08) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(6,182,212,0.14) 0%, rgba(14,165,233,0.04) 45%, transparent 70%);
     animation: lb3 17s ease-in-out infinite alternate;
   }
   .light-blob-4 {
-    width: 340px; height: 340px;
+    width: 320px; height: 320px;
     top: 58%; left: 22%;
-    background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(167,139,250,0.07) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, rgba(167,139,250,0.04) 45%, transparent 70%);
     animation: lb4 28s ease-in-out infinite alternate;
   }
+
+  .dark-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+  }
+  html:not([data-theme="light"]) .dark-blob { opacity: 1; }
+
+  .dark-blob-1 {
+    width: 600px; height: 600px;
+    top: -180px; left: -120px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, rgba(109,40,217,0.04) 50%, transparent 70%);
+    animation: lb1 22s ease-in-out infinite alternate;
+  }
+  .dark-blob-2 {
+    width: 500px; height: 500px;
+    bottom: -120px; right: -100px;
+    background: radial-gradient(circle, rgba(0,200,100,0.08) 0%, rgba(0,180,80,0.03) 50%, transparent 70%);
+    animation: lb2 26s ease-in-out infinite alternate;
+  }
+  .dark-blob-3 {
+    width: 380px; height: 380px;
+    top: 40%; right: 8%;
+    background: radial-gradient(circle, rgba(6,182,212,0.07) 0%, rgba(14,165,233,0.02) 50%, transparent 70%);
+    animation: lb3 19s ease-in-out infinite alternate;
+  }
+
   @keyframes lb1 {
     from { transform: translate(0, 0) scale(1); }
     to   { transform: translate(65px, 55px) scale(1.16); }
@@ -75,8 +106,8 @@ export function ParticleBackground() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const COUNT = 70;
-    const MAX_DIST = 140;
+    const COUNT = 48;
+    const MAX_DIST = 130;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -90,10 +121,10 @@ export function ParticleBackground() {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        size: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.5 + 0.2,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        size: Math.random() * 1.4 + 0.5,
+        opacity: Math.random() * 0.45 + 0.15,
       });
     }
 
@@ -101,9 +132,9 @@ export function ParticleBackground() {
 
     const draw = () => {
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      const ACCENT = isLight ? '79, 70, 229' : '0, 255, 136';
-      const opacityScale = isLight ? 0.9 : 1.0;
-      const lineAlpha = isLight ? 0.09 : 0.12;
+      const ACCENT = isLight ? '99, 102, 241' : '0, 210, 110';
+      const opacityScale = isLight ? 0.55 : 0.70;
+      const lineAlpha = isLight ? 0.07 : 0.09;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -130,7 +161,7 @@ export function ParticleBackground() {
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.strokeStyle = `rgba(${ACCENT}, ${alpha})`;
-            ctx.lineWidth = 0.8;
+            ctx.lineWidth = 0.7;
             ctx.stroke();
           }
         }
@@ -154,6 +185,9 @@ export function ParticleBackground() {
       <div className="light-blob light-blob-2" />
       <div className="light-blob light-blob-3" />
       <div className="light-blob light-blob-4" />
+      <div className="dark-blob dark-blob-1" />
+      <div className="dark-blob dark-blob-2" />
+      <div className="dark-blob dark-blob-3" />
       <canvas
         ref={canvasRef}
         className="particle-bg"
@@ -162,7 +196,7 @@ export function ParticleBackground() {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          opacity: 0.7,
+          opacity: 0.45,
           transition: 'opacity 0.4s ease',
         }}
       />

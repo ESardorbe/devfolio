@@ -54,7 +54,7 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, document);
   }
 
-  const port = process.env.PORT || 4001;
+  const port = process.env.PORT || 4000;
   await app.listen(port);
   logger.log(`Server ishga tushdi: http://localhost:${port}/api`);
   logger.log(`Swagger: http://localhost:${port}/docs`);

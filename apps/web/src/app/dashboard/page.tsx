@@ -15,15 +15,16 @@ import {
   Eye, Briefcase, GraduationCap, Code2,
   Settings, ChevronRight, Star, Download,
   LayoutDashboard, LogOut, Sun, Moon, Award, Menu,
-  TrendingUp, Zap, Rocket,
+  TrendingUp, Zap, Rocket, Users,
 } from 'lucide-react';
 import { ExportModal } from '@/src/components/ExportModal';
+import { ConfirmModal } from '@/src/components/ConfirmModal';
 import { LEVEL_COLORS, LEVEL_LABELS } from '@/src/lib/constants';
 import { useUIStore } from '@/src/store/ui.store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
 
-type Tab = 'overview' | 'skills' | 'projects' | 'experience' | 'education' | 'certificates';
+type Tab = 'overview' | 'skills' | 'projects' | 'experience' | 'education' | 'certificates' | 'github';
 
 const DB_STYLES = `
   .db-layout {
@@ -310,6 +311,11 @@ const DB_STYLES = `
     .form-row-3 { grid-template-columns: 1fr; }
     .form-row-2 { grid-template-columns: 1fr; }
   }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
 `;
 
 const BOTTOM_TABS: { id: Tab; label: string; icon: any }[] = [
@@ -390,8 +396,11 @@ export default function DashboardPage() {
     ? (user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`)
     : null;
 
+  const ghUsername = extractGithubUsername(user);
+
   const SIDEBAR_TABS = [
     { id: 'overview' as Tab,     label: 'Umumiy',       icon: LayoutDashboard },
+    ...(ghUsername ? [{ id: 'github' as Tab, label: 'GitHub', icon: GitBranch }] : []),
     { id: 'skills' as Tab,       label: 'Ko\'nikmalar', icon: Code2,         count: skills.length },
     { id: 'projects' as Tab,     label: 'Loyihalar',    icon: Star,          count: projects.length },
     { id: 'experience' as Tab,   label: 'Tajriba',      icon: Briefcase,     count: experiences.length },
@@ -406,6 +415,7 @@ export default function DashboardPage() {
     experience:   'Ish tajribasi',
     education:    'Ta\'lim',
     certificates: 'Sertifikatlar va Diplomlar',
+    github:       'GitHub Faolligi',
   };
 
   return (
@@ -563,6 +573,7 @@ export default function DashboardPage() {
               {activeTab === 'experience' && <ExperienceTab experiences={experiences} onRefresh={loadAll} />}
               {activeTab === 'education' && <EducationTab educations={educations} onRefresh={loadAll} />}
               {activeTab === 'certificates' && <CertificatesTab certificates={certificates} onRefresh={loadAll} />}
+              {activeTab === 'github' && <GitHubTab user={user} />}
             </>
           )}
         </main>
@@ -595,26 +606,30 @@ function OverviewTab({ user, views, skills, projects, experiences, onChangeTab, 
   user: any; views: any; skills: Skill[]; projects: Project[]; experiences: Experience[];
   onChangeTab: (t: Tab) => void; onOpenSettings: () => void;
 }) {
+  const githubUsername = extractGithubUsername(user);
+  const { repos: ghRepos, loading: ghLoading } = useGitHubData(githubUsername);
+
   const completionItems = [
     { label: 'Bio', done: !!user.bio },
     { label: 'Headline', done: !!user.headline },
     { label: 'Joylashuv', done: !!user.location },
     { label: 'GitHub havolasi', done: !!user.github },
-    { label: 'Ko\'nikmalar (3+)', done: skills.length >= 3 },
+    { label: "Ko'nikmalar (3+)", done: skills.length >= 3 },
     { label: 'Loyihalar (1+)', done: projects.length >= 1 },
     { label: 'Ish tajribasi', done: experiences.length >= 1 },
   ];
   const pct = Math.round((completionItems.filter((i) => i.done).length / completionItems.length) * 100);
+  const topRepos = [...ghRepos].sort((a, b) => b.stargazers_count - a.stargazers_count).slice(0, 4);
 
   return (
     <div>
       {/* Stats */}
       <div className="db-stats-grid">
         {[
-          { label: 'Jami ko\'rishlar', value: views.total,      icon: <Eye size={17}/>,          iconBg: 'rgba(0,255,136,0.12)',   iconColor: 'var(--accent)',  color: 'var(--accent)',  cls: 'green'  },
-          { label: 'So\'nggi 30 kun',  value: views.last30days, icon: <TrendingUp size={17}/>,   iconBg: 'rgba(6,182,212,0.12)',   iconColor: 'var(--accent3)', color: 'var(--accent3)', cls: 'cyan'   },
-          { label: 'Loyihalar',        value: projects.length,  icon: <Rocket size={17}/>,       iconBg: 'rgba(124,58,237,0.12)',  iconColor: 'var(--accent2)', color: 'var(--accent2)', cls: 'purple' },
-          { label: 'Ko\'nikmalar',     value: skills.length,    icon: <Zap size={17}/>,          iconBg: 'rgba(245,158,11,0.12)',  iconColor: '#f59e0b',        color: '#f59e0b',        cls: 'amber'  },
+          { label: "Jami ko'rishlar", value: views.total,      icon: <Eye size={17}/>,        iconBg: 'rgba(0,255,136,0.12)',  iconColor: 'var(--accent)',  color: 'var(--accent)',  cls: 'green'  },
+          { label: "So'nggi 30 kun",  value: views.last30days, icon: <TrendingUp size={17}/>, iconBg: 'rgba(6,182,212,0.12)',  iconColor: 'var(--accent3)', color: 'var(--accent3)', cls: 'cyan'   },
+          { label: 'Loyihalar',        value: projects.length,  icon: <Rocket size={17}/>,     iconBg: 'rgba(124,58,237,0.12)', iconColor: 'var(--accent2)', color: 'var(--accent2)', cls: 'purple' },
+          { label: "Ko'nikmalar",     value: skills.length,    icon: <Zap size={17}/>,        iconBg: 'rgba(245,158,11,0.12)', iconColor: '#f59e0b',        color: '#f59e0b',        cls: 'amber'  },
         ].map((s) => (
           <div key={s.label} className={`db-stat-card ${s.cls}`}>
             <div className="db-stat-icon" style={{ background: s.iconBg, color: s.iconColor }}>{s.icon}</div>
@@ -628,12 +643,12 @@ function OverviewTab({ user, views, skills, projects, experiences, onChangeTab, 
         {/* Profile completion */}
         <div className="card">
           {(() => {
-            const sz = 88, sw = 7, r = (sz - sw) / 2;
+            const sz = 72, sw = 6, r = (sz - sw) / 2;
             const circ = 2 * Math.PI * r;
             const offset = circ - (pct / 100) * circ;
             return (
               <>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '12px' }}>
                   <svg width={sz} height={sz} viewBox={`0 0 ${sz} ${sz}`} style={{ flexShrink: 0 }}>
                     <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--surface2)" strokeWidth={sw} />
                     <circle cx={sz/2} cy={sz/2} r={r} fill="none"
@@ -643,13 +658,13 @@ function OverviewTab({ user, views, skills, projects, experiences, onChangeTab, 
                       style={{ transition: 'stroke-dashoffset 0.8s ease' }}
                     />
                     <text x={sz/2} y={sz/2} textAnchor="middle" dominantBaseline="central"
-                      fill="var(--text)" fontSize="17" fontWeight="700" fontFamily="var(--mono)">
+                      fill="var(--text)" fontSize="15" fontWeight="700" fontFamily="var(--mono)">
                       {pct}%
                     </text>
                   </svg>
                   <div>
                     <p style={{ fontSize: '13px', fontWeight: 600, marginBottom: '3px' }}>
-                      {pct === 100 ? 'Profil to\'liq!' : 'Profil to\'liqligi'}
+                      {pct === 100 ? "Profil to'liq!" : "Profil to'liqligi"}
                     </p>
                     <p style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '6px' }}>
                       {completionItems.filter(i => i.done).length}/{completionItems.length} qism tayyor
@@ -659,13 +674,13 @@ function OverviewTab({ user, views, skills, projects, experiences, onChangeTab, 
                     </button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
                   {completionItems.map((item) => (
-                    <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '15px', height: '15px', borderRadius: '50%', flexShrink: 0, background: item.done ? 'var(--accent)' : 'var(--surface2)', border: item.done ? 'none' : '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {item.done && <span style={{ color: '#000', fontSize: '9px', fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ width: '13px', height: '13px', borderRadius: '50%', flexShrink: 0, background: item.done ? 'var(--accent)' : 'var(--surface2)', border: item.done ? 'none' : '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {item.done && <span style={{ color: '#000', fontSize: '8px', fontWeight: 700, lineHeight: 1 }}>✓</span>}
                       </div>
-                      <span style={{ fontSize: '12px', color: item.done ? 'var(--text)' : 'var(--text3)' }}>{item.label}</span>
+                      <span style={{ fontSize: '11px', color: item.done ? 'var(--text)' : 'var(--text3)' }}>{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -677,28 +692,135 @@ function OverviewTab({ user, views, skills, projects, experiences, onChangeTab, 
         {/* Quick actions */}
         <div className="card">
           <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '14px' }}>Tezkor amallar</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[
-              { label: 'Ko\'nikma qo\'shish', icon: <Zap size={15}/>,          tab: 'skills'     as Tab },
-              { label: 'Loyiha qo\'shish',   icon: <Rocket size={15}/>,        tab: 'projects'   as Tab },
-              { label: 'Tajriba qo\'shish',  icon: <Briefcase size={15}/>,     tab: 'experience' as Tab },
-              { label: 'Ta\'lim qo\'shish',  icon: <GraduationCap size={15}/>, tab: 'education'  as Tab },
-            ].map((q) => (
-              <button
-                key={q.label}
-                onClick={() => onChangeTab(q.tab)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 12px', cursor: 'pointer', color: 'var(--text)', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s', textAlign: 'left' }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
-              >
-                <span style={{ color: 'var(--accent)', display: 'flex', flexShrink: 0 }}>{q.icon}</span>
-                {q.label}
-                <ChevronRight size={12} style={{ marginLeft: 'auto', color: 'var(--text3)' }} />
-              </button>
-            ))}
-          </div>
+
+          {githubUsername ? (
+            <>
+              {/* GitHub repos section */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GitBranch size={13} style={{ color: 'var(--accent)' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 600 }}>GitHub Repos</span>
+                  </div>
+                  <a
+                    href={`https://github.com/${githubUsername}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '11px', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: '3px', textDecoration: 'none' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text3)'; }}
+                  >
+                    {githubUsername} <ExternalLink size={10} />
+                  </a>
+                </div>
+                {ghLoading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} style={{ height: '46px', borderRadius: '8px', background: 'var(--surface2)', animation: 'pulse 1.5s ease infinite' }} />
+                    ))}
+                  </div>
+                ) : topRepos.length === 0 ? (
+                  <p style={{ fontSize: '12px', color: 'var(--text3)', textAlign: 'center', padding: '10px 0' }}>Repository topilmadi</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {topRepos.map(repo => (
+                      <div
+                        key={repo.id}
+                        onClick={() => window.open(repo.html_url, '_blank')}
+                        style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '7px 10px', cursor: 'pointer', transition: 'border-color 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '130px' }}>
+                            {repo.name}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                            <Star size={10} style={{ color: 'var(--text3)' }} />
+                            <span style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{repo.stargazers_count}</span>
+                          </div>
+                        </div>
+                        {repo.description && (
+                          <p style={{ fontSize: '10px', color: 'var(--text2)', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {repo.description}
+                          </p>
+                        )}
+                        {repo.language && (
+                          <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '9px', padding: '1px 5px', borderRadius: '100px', background: 'rgba(57,255,133,0.1)', color: 'var(--accent)' }}>
+                            {repo.language}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {[
+                  { label: "Ko'nikma qo'shish", icon: <Zap size={15}/>,   tab: 'skills'   as Tab },
+                  { label: "Loyiha qo'shish",   icon: <Rocket size={15}/>, tab: 'projects' as Tab },
+                ].map((q) => (
+                  <button
+                    key={q.label}
+                    onClick={() => onChangeTab(q.tab)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', cursor: 'pointer', color: 'var(--text)', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s', textAlign: 'left' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+                  >
+                    <span style={{ color: 'var(--accent)', display: 'flex', flexShrink: 0 }}>{q.icon}</span>
+                    {q.label}
+                    <ChevronRight size={12} style={{ marginLeft: 'auto', color: 'var(--text3)' }} />
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {[
+                { label: "Ko'nikma qo'shish", icon: <Zap size={15}/>,          tab: 'skills'     as Tab },
+                { label: "Loyiha qo'shish",   icon: <Rocket size={15}/>,        tab: 'projects'   as Tab },
+                { label: "Tajriba qo'shish",  icon: <Briefcase size={15}/>,     tab: 'experience' as Tab },
+                { label: "Ta'lim qo'shish",   icon: <GraduationCap size={15}/>, tab: 'education'  as Tab },
+              ].map((q) => (
+                <button
+                  key={q.label}
+                  onClick={() => onChangeTab(q.tab)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 12px', cursor: 'pointer', color: 'var(--text)', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s', textAlign: 'left' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+                >
+                  <span style={{ color: 'var(--accent)', display: 'flex', flexShrink: 0 }}>{q.icon}</span>
+                  {q.label}
+                  <ChevronRight size={12} style={{ marginLeft: 'auto', color: 'var(--text3)' }} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* GitHub Faolligi */}
+      {githubUsername && (
+        <div className="card" style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <GitBranch size={15} style={{ color: 'var(--accent)' }} />
+              <span style={{ fontSize: '14px', fontWeight: 700 }}>GitHub Faolligi</span>
+            </div>
+            <a
+              href={`https://github.com/${githubUsername}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: '12px', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text3)'; }}
+            >
+              github.com/{githubUsername} <ExternalLink size={11} />
+            </a>
+          </div>
+          <ContributionGraph username={githubUsername} />
+        </div>
+      )}
 
       {/* Profile URL promo */}
       <div className="card" style={{ background: 'linear-gradient(135deg, rgba(0,255,136,0.06) 0%, rgba(124,58,237,0.06) 100%)', borderColor: 'rgba(0,255,136,0.15)' }}>
@@ -733,6 +855,7 @@ function SkillsTab({ skills, onRefresh }: { skills: Skill[]; onRefresh: () => vo
   const [editing, setEditing] = useState<Skill | null>(null);
   const [form, setForm] = useState({ name: '', level: 'INTERMEDIATE', category: '' });
   const [loading, setLoading] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const openAdd = () => { setEditing(null); setForm({ name: '', level: 'INTERMEDIATE', category: '' }); setShowForm(true); };
   const openEdit = (s: Skill) => { setEditing(s); setForm({ name: s.name, level: s.level, category: s.category || '' }); setShowForm(true); };
@@ -747,9 +870,12 @@ function SkillsTab({ skills, onRefresh }: { skills: Skill[]; onRefresh: () => vo
     } finally { setLoading(false); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('O\'chirilsinmi?')) return;
-    await skillsApi.delete(id); onRefresh();
+  const handleDelete = (id: string) => setDeleteConfirmId(id);
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    await skillsApi.delete(deleteConfirmId);
+    setDeleteConfirmId(null);
+    onRefresh();
   };
 
   const grouped = skills.reduce((acc, s) => {
@@ -761,6 +887,13 @@ function SkillsTab({ skills, onRefresh }: { skills: Skill[]; onRefresh: () => vo
 
   return (
     <div>
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Ko'nikmani o'chirish"
+        message="Bu ko'nikma profilingizdan butunlay o'chiriladi."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ color: 'var(--text2)', fontSize: '13px' }}>{skills.length} ta ko'nikma</p>
         <button onClick={openAdd} className="btn-primary" style={{ fontSize: '13px', padding: '8px 16px' }}>
@@ -834,6 +967,7 @@ function ProjectsTab({ projects, onRefresh }: { projects: Project[]; onRefresh: 
   const [form, setForm] = useState({ title: '', description: '', techs: '', github: '', demo: '', featured: false });
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const openAdd = () => { setEditing(null); setForm({ title: '', description: '', techs: '', github: '', demo: '', featured: false }); setFormError(''); setShowForm(true); };
   const openEdit = (p: Project) => { setEditing(p); setForm({ title: p.title, description: p.description, techs: p.techs.join(', '), github: p.github || '', demo: p.demo || '', featured: p.featured }); setFormError(''); setShowForm(true); };
@@ -858,13 +992,23 @@ function ProjectsTab({ projects, onRefresh }: { projects: Project[]; onRefresh: 
     } finally { setLoading(false); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Loyiha o\'chirilsinmi?')) return;
-    await projectsApi.delete(id); onRefresh();
+  const handleDelete = (id: string) => setDeleteConfirmId(id);
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    await projectsApi.delete(deleteConfirmId);
+    setDeleteConfirmId(null);
+    onRefresh();
   };
 
   return (
     <div>
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Loyihani o'chirish"
+        message="Bu loyiha profilingizdan butunlay o'chiriladi."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ color: 'var(--text2)', fontSize: '13px' }}>{projects.length} ta loyiha</p>
         <button onClick={openAdd} className="btn-primary" style={{ fontSize: '13px', padding: '8px 16px' }}>
@@ -947,6 +1091,7 @@ function ExperienceTab({ experiences, onRefresh }: { experiences: Experience[]; 
   const [editing, setEditing] = useState<Experience | null>(null);
   const [form, setForm] = useState({ company: '', position: '', description: '', startDate: '', endDate: '', isCurrent: false, location: '' });
   const [loading, setLoading] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const openAdd = () => { setEditing(null); setForm({ company: '', position: '', description: '', startDate: '', endDate: '', isCurrent: false, location: '' }); setShowForm(true); };
   const openEdit = (e: Experience) => { setEditing(e); setForm({ company: e.company, position: e.position, description: e.description || '', startDate: e.startDate.slice(0, 10), endDate: e.endDate?.slice(0, 10) || '', isCurrent: e.isCurrent, location: e.location || '' }); setShowForm(true); };
@@ -961,15 +1106,25 @@ function ExperienceTab({ experiences, onRefresh }: { experiences: Experience[]; 
     } finally { setLoading(false); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('O\'chirilsinmi?')) return;
-    await experiencesApi.delete(id); onRefresh();
+  const handleDelete = (id: string) => setDeleteConfirmId(id);
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    await experiencesApi.delete(deleteConfirmId);
+    setDeleteConfirmId(null);
+    onRefresh();
   };
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short' });
 
   return (
     <div>
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Tajribani o'chirish"
+        message="Bu ish tajribasi profilingizdan butunlay o'chiriladi."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ color: 'var(--text2)', fontSize: '13px' }}>{experiences.length} ta tajriba</p>
         <button onClick={openAdd} className="btn-primary" style={{ fontSize: '13px', padding: '8px 16px' }}><Plus size={14} /> Tajriba qo'shish</button>
@@ -1032,6 +1187,7 @@ function EducationTab({ educations, onRefresh }: { educations: Education[]; onRe
   const [editing, setEditing] = useState<Education | null>(null);
   const [form, setForm] = useState({ institution: '', degree: '', field: '', startDate: '', endDate: '', isCurrent: false, description: '' });
   const [loading, setLoading] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const openAdd = () => { setEditing(null); setForm({ institution: '', degree: '', field: '', startDate: '', endDate: '', isCurrent: false, description: '' }); setShowForm(true); };
   const openEdit = (e: Education) => { setEditing(e); setForm({ institution: e.institution, degree: e.degree, field: e.field, startDate: e.startDate.slice(0, 10), endDate: e.endDate?.slice(0, 10) || '', isCurrent: e.isCurrent, description: e.description || '' }); setShowForm(true); };
@@ -1046,13 +1202,23 @@ function EducationTab({ educations, onRefresh }: { educations: Education[]; onRe
     } finally { setLoading(false); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('O\'chirilsinmi?')) return;
-    await educationsApi.delete(id); onRefresh();
+  const handleDelete = (id: string) => setDeleteConfirmId(id);
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    await educationsApi.delete(deleteConfirmId);
+    setDeleteConfirmId(null);
+    onRefresh();
   };
 
   return (
     <div>
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Ta'lim ma'lumotini o'chirish"
+        message="Bu ta'lim ma'lumoti profilingizdan butunlay o'chiriladi."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ color: 'var(--text2)', fontSize: '13px' }}>{educations.length} ta ta'lim</p>
         <button onClick={openAdd} className="btn-primary" style={{ fontSize: '13px', padding: '8px 16px' }}><Plus size={14} /> Ta'lim qo'shish</button>
@@ -1115,6 +1281,7 @@ function CertificatesTab({ certificates, onRefresh }: { certificates: Certificat
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const openAdd = () => { setEditing(null); setForm({ title: '', issuer: '', issueDate: '', expiryDate: '', url: '' }); setFile(null); setFilePreview(''); setShowForm(true); };
@@ -1138,15 +1305,25 @@ function CertificatesTab({ certificates, onRefresh }: { certificates: Certificat
     } finally { setLoading(false); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Sertifikat o\'chirilsinmi?')) return;
-    await certificatesApi.delete(id); onRefresh();
+  const handleDelete = (id: string) => setDeleteConfirmId(id);
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    await certificatesApi.delete(deleteConfirmId);
+    setDeleteConfirmId(null);
+    onRefresh();
   };
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short' });
 
   return (
     <div>
+      <ConfirmModal
+        open={!!deleteConfirmId}
+        title="Sertifikatni o'chirish"
+        message="Bu sertifikat profilingizdan butunlay o'chiriladi."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ color: 'var(--text2)', fontSize: '13px' }}>{certificates.length} ta sertifikat</p>
         <button onClick={openAdd} className="btn-primary" style={{ fontSize: '13px', padding: '8px 16px' }}><Plus size={14} /> Sertifikat qo'shish</button>
@@ -1221,6 +1398,390 @@ function EmptyState({ icon, text, onAdd }: { icon: React.ReactNode; text: string
       </div>
       <p style={{ fontSize: '14px', marginBottom: '16px' }}>{text}</p>
       <button onClick={onAdd} className="btn-primary" style={{ fontSize: '13px' }}><Plus size={14} /> Qo'shish</button>
+    </div>
+  );
+}
+
+/* ─── GitHub Data Types ──────────────────────────────────────── */
+interface GitHubProfile {
+  login: string;
+  name: string | null;
+  public_repos: number;
+  followers: number;
+  following: number;
+  avatar_url: string;
+}
+interface GitHubRepo {
+  id: number;
+  name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  language: string | null;
+  updated_at: string;
+  fork: boolean;
+  license: { spdx_id: string } | null;
+}
+interface ContributionDay { date: string; count: number; level: 0 | 1 | 2 | 3 | 4; }
+interface GitHubContributions { total: Record<string, number>; contributions: ContributionDay[]; }
+interface GitHubData {
+  profile: GitHubProfile | null;
+  repos: GitHubRepo[];
+  contributions: GitHubContributions | null;
+  loading: boolean;
+  error: string | null;
+}
+
+function extractGithubUsername(user: any): string | null {
+  if (user?.githubUsername) return user.githubUsername as string;
+  if (user?.github) {
+    const m = (user.github as string).match(/github\.com\/([^/?#\s]+)/i);
+    return m ? m[1] : null;
+  }
+  return null;
+}
+
+const githubCache = new Map<string, GitHubData>();
+
+function useGitHubData(username: string | null): GitHubData {
+  const [data, setData] = useState<GitHubData>(() => {
+    if (username && githubCache.has(username)) return githubCache.get(username)!;
+    return { profile: null, repos: [], contributions: null, loading: !!username, error: null };
+  });
+
+  useEffect(() => {
+    if (!username) {
+      setData({ profile: null, repos: [], contributions: null, loading: false, error: null });
+      return;
+    }
+    if (githubCache.has(username)) {
+      setData(githubCache.get(username)!);
+      return;
+    }
+    setData({ profile: null, repos: [], contributions: null, loading: true, error: null });
+    Promise.all([
+      fetch(`https://api.github.com/users/${username}`).then(r => r.json()),
+      fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`).then(r => r.json()),
+    ]).then(([profile, repos]) => {
+      const result: GitHubData = {
+        profile: profile?.login ? (profile as GitHubProfile) : null,
+        repos: Array.isArray(repos) ? (repos as GitHubRepo[]) : [],
+        contributions: null,
+        loading: false,
+        error: null,
+      };
+      githubCache.set(username, result);
+      setData(result);
+    }).catch((err: Error) => {
+      setData({ profile: null, repos: [], contributions: null, loading: false, error: err.message });
+    });
+  }, [username]);
+
+  return data;
+}
+
+/* ─── Contribution Graph ─────────────────────────────────────── */
+const contribCache = new Map<string, GitHubContributions>();
+
+function ContributionGraph({ username }: { username: string }) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear - 1, currentYear - 2];
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [contributions, setContributions] = useState<GitHubContributions | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const key = `${username}:${selectedYear}`;
+    if (contribCache.has(key)) {
+      setContributions(contribCache.get(key)!);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setContributions(null);
+    fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=${selectedYear}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data?.contributions) {
+          contribCache.set(key, data as GitHubContributions);
+          setContributions(data as GitHubContributions);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [username, selectedYear]);
+
+  const days = contributions?.contributions ?? [];
+
+  const CELL = 10, GAP = 2, S = CELL + GAP;
+  const LABEL_W = 28, MONTH_H = 18;
+  const GH_COLORS = ['var(--surface2)', 'rgba(57,255,133,0.25)', 'rgba(57,255,133,0.50)', 'rgba(57,255,133,0.75)', '#39FF85'];
+
+  const weeks: (ContributionDay | null)[][] = [];
+  if (days.length > 0) {
+    let week: (ContributionDay | null)[] = [];
+    const firstDow = new Date(days[0].date + 'T00:00:00').getDay();
+    for (let i = 0; i < firstDow; i++) week.push(null);
+    for (const day of days) {
+      week.push(day);
+      if (week.length === 7) { weeks.push(week); week = []; }
+    }
+    if (week.length > 0) {
+      while (week.length < 7) week.push(null);
+      weeks.push(week);
+    }
+  }
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthLabels: { x: number; label: string }[] = [];
+  let lastMonth = -1;
+  weeks.forEach((wk, wi) => {
+    const firstDay = wk.find(d => d !== null);
+    if (!firstDay) return;
+    const m = new Date(firstDay.date + 'T00:00:00').getMonth();
+    if (m !== lastMonth) { monthLabels.push({ x: LABEL_W + wi * S, label: MONTHS[m] }); lastMonth = m; }
+  });
+
+  const svgW = LABEL_W + weeks.length * S;
+  const svgH = MONTH_H + 7 * S;
+  const totalCount = contributions?.total?.[selectedYear] ?? days.reduce((s, d) => s + d.count, 0);
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--text2)' }}>
+          {loading
+            ? <span style={{ color: 'var(--text3)' }}>Yuklanmoqda...</span>
+            : <><span style={{ fontWeight: 700, color: 'var(--text)' }}>{totalCount}</span> ta faollik yil davomida</>
+          }
+        </p>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {years.map(y => (
+            <button
+              key={y}
+              onClick={() => setSelectedYear(y)}
+              style={{
+                padding: '3px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
+                fontFamily: 'var(--mono)', border: '1px solid var(--border2)',
+                background: selectedYear === y ? 'rgba(0,255,136,0.15)' : 'transparent',
+                color: selectedYear === y ? 'var(--accent)' : 'var(--text3)',
+                transition: 'all 0.15s',
+              }}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ height: '88px', borderRadius: '8px', background: 'var(--surface2)', animation: 'pulse 1.5s ease infinite' }} />
+      ) : days.length === 0 ? (
+        <p style={{ fontSize: '12px', color: 'var(--text3)', textAlign: 'center', padding: '20px 0' }}>
+          Bu yil uchun faollik ma&apos;lumotlari topilmadi
+        </p>
+      ) : (
+        <>
+          <div style={{ overflowX: 'auto' }}>
+            <svg width={svgW} height={svgH} style={{ display: 'block', minWidth: `${svgW}px` }}>
+              {monthLabels.map(({ x, label }) => (
+                <text key={`${label}-${x}`} x={x} y={13} fontSize="10" fill="var(--text3)" fontFamily="var(--sans)">{label}</text>
+              ))}
+              {[{ label: 'Mon', dow: 1 }, { label: 'Wed', dow: 3 }, { label: 'Fri', dow: 5 }].map(({ label, dow }) => (
+                <text key={label} x={LABEL_W - 4} y={MONTH_H + dow * S + CELL - 1} fontSize="9" fill="var(--text3)" textAnchor="end" fontFamily="var(--sans)">{label}</text>
+              ))}
+              {weeks.map((wk, wi) =>
+                wk.map((day, di) => (
+                  <rect key={`${wi}-${di}`} x={LABEL_W + wi * S} y={MONTH_H + di * S} width={CELL} height={CELL} rx={2}
+                    fill={day ? GH_COLORS[day.level] : GH_COLORS[0]}
+                  >
+                    {day?.date ? <title>{day.date}: {day.count} contributions</title> : null}
+                  </rect>
+                ))
+              )}
+            </svg>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: '10px', color: 'var(--text3)', marginRight: '4px' }}>Less</span>
+            {GH_COLORS.map((color, i) => (
+              <div key={i} style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
+            ))}
+            <span style={{ fontSize: '10px', color: 'var(--text3)', marginLeft: '4px' }}>More</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─── GitHub Tab ─────────────────────────────────────────────── */
+function GitHubTab({ user }: { user: any }) {
+  const githubUsername = extractGithubUsername(user);
+  const { profile, repos, loading } = useGitHubData(githubUsername);
+  const [filter, setFilter] = useState<'all' | 'source' | 'forked'>('all');
+  const [sort, setSort] = useState<'stars' | 'updated' | 'name'>('stars');
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
+
+  if (!githubUsername) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text2)' }}>
+        <GitBranch size={36} style={{ opacity: 0.3, display: 'block', margin: '0 auto 12px' }} />
+        <p style={{ marginBottom: '8px' }}>GitHub profilingiz ulanmagan</p>
+        <p style={{ fontSize: '12px', color: 'var(--text3)' }}>Sozlamalar → Ijtimoiy tarmoqlar da GitHub URL ni qo'shing</p>
+      </div>
+    );
+  }
+
+  const totalStars = repos.reduce((sum, r) => sum + r.stargazers_count, 0);
+
+  const filteredRepos = repos
+    .filter(r => filter === 'all' ? true : filter === 'source' ? !r.fork : r.fork)
+    .sort((a, b) => {
+      if (sort === 'stars') return b.stargazers_count - a.stargazers_count;
+      if (sort === 'updated') return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      return a.name.localeCompare(b.name);
+    });
+
+  const pagedRepos = filteredRepos.slice(0, page * PER_PAGE);
+
+  const timeAgo = (dateStr: string): string => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const d = Math.floor(diff / 86400000);
+    if (d === 0) return 'bugun';
+    if (d === 1) return 'kecha';
+    if (d < 30) return `${d} kun oldin`;
+    if (d < 365) return `${Math.floor(d / 30)} oy oldin`;
+    return `${Math.floor(d / 365)} yil oldin`;
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Stats */}
+      <div className="db-stats-grid">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="db-stat-card" style={{ minHeight: '100px', animation: 'pulse 1.5s ease infinite' }} />
+            ))
+          : [
+              { label: 'Repositories', value: profile?.public_repos ?? repos.length, color: 'var(--accent)',  cls: 'green',  bg: 'rgba(0,255,136,0.12)',  icon: <GitBranch size={17} /> },
+              { label: 'Stars',         value: totalStars,                            color: '#f59e0b',        cls: 'amber',  bg: 'rgba(245,158,11,0.12)', icon: <Star size={17} /> },
+              { label: 'Followers',     value: profile?.followers ?? 0,              color: 'var(--accent3)', cls: 'cyan',   bg: 'rgba(6,182,212,0.12)',  icon: <Users size={17} /> },
+              { label: 'Following',     value: profile?.following ?? 0,              color: 'var(--accent2)', cls: 'purple', bg: 'rgba(124,58,237,0.12)', icon: <Users size={17} /> },
+            ].map(s => (
+              <div key={s.label} className={`db-stat-card ${s.cls}`}>
+                <div className="db-stat-icon" style={{ background: s.bg, color: s.color }}>{s.icon}</div>
+                <div className="db-stat-value" style={{ color: s.color }}>{s.value}</div>
+                <div className="db-stat-label">{s.label}</div>
+              </div>
+            ))}
+      </div>
+
+      {/* Contribution graph */}
+      <div className="card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <GitBranch size={15} style={{ color: 'var(--accent)' }} />
+          <span style={{ fontSize: '14px', fontWeight: 700 }}>GitHub Faolligi</span>
+        </div>
+        <ContributionGraph username={githubUsername!} />
+      </div>
+
+      {/* Repos */}
+      <div className="card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700 }}>Repositories ({filteredRepos.length})</h3>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {(['all', 'source', 'forked'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => { setFilter(f); setPage(1); }}
+                style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', border: '1px solid var(--border2)', fontFamily: 'var(--sans)', background: filter === f ? 'rgba(0,255,136,0.1)' : 'transparent', color: filter === f ? 'var(--accent)' : 'var(--text2)' }}
+              >
+                {f === 'all' ? 'Hammasi' : f === 'source' ? 'Asosiy' : 'Fork'}
+              </button>
+            ))}
+            <span style={{ color: 'var(--border2)' }}>|</span>
+            <select
+              value={sort}
+              onChange={e => { setSort(e.target.value as 'stars' | 'updated' | 'name'); setPage(1); }}
+              className="input"
+              style={{ fontSize: '11px', padding: '4px 8px', width: 'auto', cursor: 'pointer' }}
+            >
+              <option value="stars">Stars ↓</option>
+              <option value="updated">Updated ↓</option>
+              <option value="name">Nom A-Z</option>
+            </select>
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)' }}>Yuklanmoqda...</div>
+        ) : filteredRepos.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)' }}>Repository topilmadi</div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+              {pagedRepos.map(repo => (
+                <div
+                  key={repo.id}
+                  onClick={() => window.open(repo.html_url, '_blank')}
+                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 14px', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border2)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                      <GitBranch size={13} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--accent)', fontFamily: 'var(--mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {repo.name}
+                      </span>
+                      {repo.fork && <span style={{ fontSize: '9px', color: 'var(--text3)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>fork</span>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, marginLeft: '8px' }}>
+                      {repo.forks_count > 0 && (
+                        <span style={{ fontSize: '11px', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          <GitBranch size={10} /> {repo.forks_count}
+                        </span>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <Star size={11} style={{ color: '#f59e0b' }} />
+                        <span style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{repo.stargazers_count}</span>
+                      </div>
+                      <ExternalLink size={12} style={{ color: 'var(--text3)' }} />
+                    </div>
+                  </div>
+                  {repo.description && (
+                    <p style={{ fontSize: '12px', color: 'var(--text2)', marginBottom: '8px', lineHeight: 1.5 }}>
+                      {repo.description.length > 100 ? repo.description.slice(0, 100) + '…' : repo.description}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    {repo.language && (
+                      <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '100px', background: 'rgba(57,255,133,0.1)', color: 'var(--accent)', fontWeight: 500 }}>
+                        {repo.language}
+                      </span>
+                    )}
+                    {repo.license?.spdx_id && repo.license.spdx_id !== 'NOASSERTION' && (
+                      <span style={{ fontSize: '10px', color: 'var(--text3)' }}>{repo.license.spdx_id}</span>
+                    )}
+                    <span style={{ fontSize: '10px', color: 'var(--text3)', marginLeft: 'auto' }}>{timeAgo(repo.updated_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {pagedRepos.length < filteredRepos.length && (
+              <button
+                onClick={() => setPage(p => p + 1)}
+                className="btn-ghost"
+                style={{ width: '100%', marginTop: '12px', fontSize: '13px', padding: '10px' }}
+              >
+                Ko'proq yuklash ({filteredRepos.length - pagedRepos.length} ta qoldi)
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

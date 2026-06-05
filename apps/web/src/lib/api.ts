@@ -20,7 +20,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
+    if (!error.response) {
+      return Promise.reject({ message: 'Server bilan aloqa yo\'q. Internet yoki server holatini tekshiring.' });
+    }
+    if (error.response.status === 401) {
       const url = error.config?.url ?? '';
       const isAuthCall = url.includes('/auth/login') || url.includes('/auth/register');
       if (typeof window !== 'undefined' && !isAuthCall) {
@@ -28,7 +31,7 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    return Promise.reject(error.response?.data || error);
+    return Promise.reject(error.response.data);
   },
 );
 

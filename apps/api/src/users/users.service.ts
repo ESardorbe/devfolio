@@ -49,11 +49,18 @@ export class UsersService {
   async getMyProfile(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        id: true, email: true, username: true, name: true, avatar: true,
+        bio: true, headline: true, location: true, website: true,
+        github: true, linkedin: true, telegram: true, twitter: true,
+        phone: true, birthDate: true,
+        isPublic: true, isOpenToWork: true, isEmailVerified: true,
+        createdAt: true, updatedAt: true,
         skills: { orderBy: { order: 'asc' } },
         projects: { orderBy: { order: 'asc' } },
         experiences: { orderBy: { order: 'asc' } },
         educations: { orderBy: { order: 'asc' } },
+        certificates: { orderBy: { order: 'asc' } },
       },
     });
   }

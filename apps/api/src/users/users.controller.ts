@@ -8,8 +8,15 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png':  '.png',
+  'image/gif':  '.gif',
+  'image/webp': '.webp',
+};
 
 
 @ApiTags('users')
@@ -50,7 +57,7 @@ export class UsersController {
     const auth = req.headers.authorization;
     if (auth?.startsWith('Bearer ')) {
       try {
-        const payload: any = this.jwtService.verify(auth.replace('Bearer ', ''));
+        const payload: any = this.jwtService.decode(auth.replace('Bearer ', ''));
         viewerId = payload?.sub;
       } catch {}
     }
@@ -110,7 +117,8 @@ export class UsersController {
           cb(null, uploadPath);
         },
         filename: (_req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+          const ext = MIME_TO_EXT[file.mimetype] ?? '.jpg';
+          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
           cb(null, uniqueName);
         },
       }),
