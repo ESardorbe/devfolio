@@ -20,7 +20,8 @@ jobs:
           script: |
             set -e
             cd /opt/devfolio
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             docker-compose stop web || true
             ss -tlnp 'sport = :3000' | grep -oP 'pid=\K[0-9]+' | xargs -r kill -9 2>/dev/null || true
             docker-compose up -d --build --remove-orphans
